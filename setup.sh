@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # WSL Ubuntu Dotfiles
-# Font: https://github.com/samuelramox/wsl-setup
+# Font: https://github.com/alexandre-machado/wsl-setup
 # Main install script
 
 source ./scripts/utils.sh

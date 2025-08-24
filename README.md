@@ -24,7 +24,7 @@ _Check linked files to more details._
 
 ## Installation
 
-**Note:** I use the [Windows 11 Setup Script](https://github.com/samuelramox/windows-setup) script to configure `Windows`, install some apps and `WSL`. To use the script, just download and open it with `PowerShell`. If you use it, skip to step [Install dotfiles](#install-dotfiles).
+**Note:** I use the [Windows 11 Setup Script](https://github.com/alexandre-machado/windows-setup) script to configure `Windows`, install some apps and `WSL`. To use the script, just download and open it with `PowerShell`. If you use it, skip to step [Install dotfiles](#install-dotfiles).
 
 ### Install WSL
 
@@ -41,7 +41,7 @@ After restarting, launch `Ubuntu.exe` from the _Start Menu_. You’ll be asked t
 If you already have `Windows` and `WSL` installed, run these commands in `WSL`:
 
 ```
-git clone https://github.com/samuelramox/wsl-setup.git
+git clone https://github.com/alexandre-machado/wsl-setup.git
 chmod 700 wsl-setup/ -R
 cd wsl-setup
 ./setup.sh
