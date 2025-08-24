@@ -10,10 +10,6 @@ echo_info "Installing apps..."
 # Update Ubuntu
 sudo apt update && sudo apt upgrade -y
 
-# Ubuntu WSL
-# Check out https://github.com/wslutilities/wslufor more details
-sudo apt install -y ubuntu-wsl
-
 # Essential package
 sudo apt install -y build-essential
 
@@ -27,6 +23,9 @@ sudo apt update && sudo apt install -y git
 # Nodejs
 curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
 sudo apt install -y nodejs yarn
+
+# Resource Monitor
+sudo apt install -y btop
 
 # Finish
 echo_success "Finished applications installation."

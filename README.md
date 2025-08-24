@@ -26,11 +26,19 @@ _Check linked files to more details._
 
 **Note:** I use the [Windows 11 Setup Script](https://github.com/alexandre-machado/windows-setup) script to configure `Windows`, install some apps and `WSL`. To use the script, just download and open it with `PowerShell`. If you use it, skip to step [Install dotfiles](#install-dotfiles).
 
+### Install directly from Windows (PowerShell)
+
+You can install WSL and run the setup directly from Windows with one command (no need to manually clone the repository):
+
+```pwsh
+irm https://raw.githubusercontent.com/alexandre-machado/wsl-setup/main/wsl-setup.ps1 | iex
+```
+
 ### Install WSL
 
 If you do not already have `WSL`, follow these steps to install. Open `Powershell` by searching for it in _Search_ and _right-clicking_ for a context menu and clicking _“Run as Administrator”_. Enter the following command:
 
-```
+```pwsh
 wsl --install
 ```
 
