@@ -19,8 +19,9 @@ git clone https://github.com/zsh-users/zsh-completions ~/.oh-my-zsh/custom/plugi
 # Install plugin F-Sy-H
 git clone https://github.com/z-shell/F-Sy-H.git ~/.oh-my-zsh/custom/plugins/F-Sy-H
 
-# Install asdf
-git clone https://github.com/asdf-vm/asdf.git ~/.asdf
+# Install NVM
+git clone https://github.com/nvm-sh/nvm.git ~/.nvm
+cd ~/.nvm && git checkout `git describe --abbrev=0 --tags`
 
 # Move permanent files to Home directory
 replace "./scripts/.zshrc" ".zshrc"
