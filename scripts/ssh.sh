@@ -10,7 +10,7 @@ git config --global url.ssh://git@github.com/.insteadOf https://github.com/
 echo_info "Generating SSH key..."
 
 echo_info "Create a password for SSH key:"
-ssh-keygen -q -t ed25519 -o -a 100 -C "$SSH_EMAIL" -f ~/.ssh/id_ed25519
+ssh-keygen -q -t ed25519 -o -a 100 -C "$GIT_EMAIL" -f ~/.ssh/id_ed25519
 touch ~/.ssh/config
 echo -e "Host *\n IgnoreUnknown UseKeychain\n AddKeysToAgent yes\n UseKeychain yes\n" >> ~/.ssh/config
 echo -e "IdentityFile ~/.ssh/id_ed25519" >> ~/.ssh/config

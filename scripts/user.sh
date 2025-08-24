@@ -5,16 +5,21 @@
 # If you don't put the data in now, you'll need to configure .gitconfig and SSH later
 
 # User variables
-GIT_NAME=""
-GIT_EMAIL=""
-SSH_EMAIL=""
+if [ -z "$GIT_NAME" ]; then
+	read -p "Enter your name for Git: " GIT_NAME
+fi
+if [ -z "$GIT_EMAIL" ]; then
+	read -p "Enter your email for Git: " GIT_EMAIL
+fi
+
+# Export variables for next scripts
+export GIT_NAME
+export GIT_EMAIL
 
 # Guidance
 # - GIT_NAME: name and surname to use in Git settings.
 # - GIT_EMAIL: email to use in Git settings.
-# - SSH_EMAIL: email to use in SSH settings (optional, leave blank if you don't want to run SSH script).
 
 # Example
 # - GIT_NAME: "John Doe"
 # - GIT_EMAIL: "johndoe@example"
-# - SSH_EMAIL: "johndoe@example"

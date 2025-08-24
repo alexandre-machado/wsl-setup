@@ -8,7 +8,6 @@ source ./scripts/utils.sh
 
 # Add your data
 echo_info "Add your data:"
-nano ./scripts/user.sh
 source ./scripts/user.sh
 
 # Install applications
@@ -21,12 +20,14 @@ bash ./scripts/dotfiles.sh
 bash ./scripts/npm.sh
 
 # Generate SSH key
-if [[ $SSH_EMAIL ]]; then
+if [ -z "$SSH_DISABLED" ]; then
   bash ./scripts/ssh.sh
 fi
 
 # Generate GPG key
-bash ./scripts/gpg.sh
+if [ -z "$GPG_DISABLED" ]; then
+  bash ./scripts/gpg.sh
+fi
 
 # Create a directory for projects and development
 echo_info "Creating repos directory in Home directory..."
