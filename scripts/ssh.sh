@@ -16,6 +16,8 @@ echo -e "Host *\n IgnoreUnknown UseKeychain\n AddKeysToAgent yes\n UseKeychain y
 echo -e "IdentityFile ~/.ssh/id_ed25519" >> ~/.ssh/config
 eval "$(ssh-agent -s)"
 ssh-add ~/.ssh/id_ed25519
+ssh -T git@github.com
+
 echo_warning "Use copyssh command to copy the SSH key to the clipboard."
 
 # Finish
