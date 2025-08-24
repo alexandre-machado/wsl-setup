@@ -18,9 +18,9 @@ jobs:
 
       - name: Enable WSL and install Ubuntu
         run: |
+          wsl --update
           wsl --install Ubuntu-24.04
           wsl --set-default Ubuntu-24.04
-          wsl --update
 
       - name: Clone repo and run setup in WSL
         run: |
