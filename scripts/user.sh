@@ -6,10 +6,10 @@
 
 # User variables
 if [ -z "$GIT_NAME" ]; then
-	read -p "Enter your name for Git: " GIT_NAME
+	read -p " -> Enter your name for Git: " GIT_NAME
 fi
 if [ -z "$GIT_EMAIL" ]; then
-	read -p "Enter your email for Git: " GIT_EMAIL
+	read -p " -> Enter your email for Git: " GIT_EMAIL
 fi
 
 # Export variables for next scripts

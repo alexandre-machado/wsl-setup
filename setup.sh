@@ -7,7 +7,6 @@
 source ./scripts/utils.sh
 
 # Add your data
-echo_info "Add your data:"
 source ./scripts/user.sh
 
 # Install applications
