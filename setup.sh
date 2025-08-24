@@ -29,8 +29,8 @@ fi
 bash ./scripts/gpg.sh
 
 # Create a directory for projects and development
-echo_info "Creating Developer directory in Home directory..."
-mkdir ${HOME}/Developer ${HOME}/Developer
+echo_info "Creating repos directory in Home directory..."
+mkdir ${HOME}/repos ${HOME}/repos
 
 # Cleanup cached downloads and remove the installation zip and folder
 echo_info "Removing unnecessary files..."

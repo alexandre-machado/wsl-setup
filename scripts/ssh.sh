@@ -4,6 +4,9 @@
 
 source ./scripts/utils.sh
 
+echo_info "Configuring git to use SSH..."
+git config --global url.ssh://git@github.com/.insteadOf https://github.com/
+
 echo_info "Generating SSH key..."
 
 echo_info "Create a password for SSH key:"

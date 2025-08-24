@@ -34,10 +34,13 @@ source $ZSH/oh-my-zsh.sh
 
 # --------------------------- Aliases ----------------------------------
 # Copy SSH
-alias copyssh="cat < ~/.ssh/id_ed25519.pub | clip.exe | echo '=> Public SSH key copied.'"
+alias copyssh="cat < ~/.ssh/id_ed25519.pub | clip.exe | echo '=> Public SSH key copied. add on https://github.com/settings/ssh/new'"
 
-# Open developer directory
-alias dev="${HOME}/Developer"
+# Copy GPG
+alias copygpg="gpg --armor --export $(gpg --list-secret-keys --with-colons | grep '^sec' | tail -1 | cut -d: -f5) | clip.exe | echo '=> Public GPG key copied. add on https://github.com/settings/gpg/new'"
+
+# Open repos directory
+alias repos="${HOME}/repos"
 
 # Open Explorer in current folder
 alias explorer="explorer.exe ."

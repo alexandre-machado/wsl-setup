@@ -20,7 +20,7 @@ EOF
 KEY_ID=$(gpg --list-secret-keys --with-colons | grep '^sec' | tail -1 | cut -d: -f5)
 
 # Export the public key in ASCII armor format
-gpg --armor --export "$KEY_ID"
+# gpg --armor --export "$KEY_ID"
 # Prints the GPG key ID, in ASCII armor format and add on https://github.com/settings/gpg/new
 
 # Configure git to use the new key
