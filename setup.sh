@@ -25,6 +25,9 @@ if [[ $SSH_EMAIL ]]; then
   bash ./scripts/ssh.sh
 fi
 
+# Generate GPG key
+bash ./scripts/gpg.sh
+
 # Create a directory for projects and development
 echo_info "Creating Developer directory in Home directory..."
 mkdir ${HOME}/Developer ${HOME}/Developer
