@@ -16,11 +16,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Enable WSL and install Ubuntu
-        run: |
-          wsl --update
-          wsl --install Ubuntu-24.04
-          wsl --set-default Ubuntu-24.04
+      - name: List available WSL distros
+        run: wsl --list --online
+
+      - name: Install Ubuntu-22.04
+        run: wsl --install -d Ubuntu-22.04
+
+      - name: Set default WSL distro
+        run: wsl --set-default Ubuntu-22.04
 
       - name: Clone repo and run setup in WSL
         run: |
