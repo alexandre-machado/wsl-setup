@@ -27,5 +27,8 @@ sudo apt install -y nodejs yarn
 # Resource Monitor
 sudo apt install -y btop
 
+# Lazydocker
+curl https://raw.githubusercontent.com/jesseduffield/lazydocker/master/scripts/install_update_linux.sh | bash
+
 # Finish
 echo_success "Finished applications installation."
