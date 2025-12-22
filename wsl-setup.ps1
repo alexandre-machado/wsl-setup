@@ -1,3 +1,16 @@
+wsl --help > $null 2>&1
+# Verifica WSL via winget e instala se não encontrado
+$wslList = winget list --id Microsoft.WSL 2>&1 | Out-String
+if ($wslList -match 'No installed package found matching input criteria' -or $wslList -notmatch 'Microsoft\.WSL') {
+	Write-Host "WSL (Microsoft.WSL) não encontrado. Instalando via winget..." -ForegroundColor Yellow
+	winget install --id Microsoft.WSL --exact --accept-package-agreements --accept-source-agreements
+	if ($LASTEXITCODE -ne 0) {
+		Write-Host "Falha ao instalar WSL via winget. Tente manualmente: winget install --id Microsoft.WSL --exact" -ForegroundColor Red
+		exit 1
+	}
+	Write-Host "WSL instalado via winget." -ForegroundColor Green
+}
+
 wsl --update
 wsl --unregister Ubuntu-24.04
 wsl --install Ubuntu-24.04
