@@ -12,6 +12,9 @@ export ZSH=$HOME/.oh-my-zsh
 # Support 256 colors path
 export TERM="xterm-256color"
 
+# Add user-local binaries to PATH (for lazydocker, etc.)
+export PATH="$HOME/.local/bin:$PATH"
+
 # npm ENV
 # Fix EACCES permissions errors when installing packages globally
 NPM_CONFIG_PREFIX=~/.npm-global
