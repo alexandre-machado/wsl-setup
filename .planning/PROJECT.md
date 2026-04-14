@@ -8,6 +8,17 @@ WSL Setup Revamp modernizes an existing WSL bootstrap toolkit for Debian/Ubuntu 
 
 A Windows user should be able to run one guided path and end with a working, modern WSL developer environment with minimal manual fixes.
 
+## Current Milestone: v1.1 Windows Setup Simplification
+
+**Goal:** Simplify and harden the Windows-first setup path while modernizing script dependencies and reducing setup friction.
+
+**Target features:**
+- Simplified Windows bootstrap flow with clearer guidance and fewer manual interventions.
+- Updated tool/library versions to supported stable defaults.
+- Consolidated setup steps to reduce duplication and confusion.
+- Stronger validation and safer failure handling in setup scripts.
+- Improved documentation for Windows-first onboarding.
+
 ## Requirements
 
 ### Validated
@@ -71,4 +82,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-14 after initialization*
+*Last updated: 2026-04-14 after milestone v1.1 start*
