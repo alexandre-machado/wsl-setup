@@ -1,0 +1,22 @@
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# Editor/IDE artifacts
+.vscode/
+.idea/
+
+# Runtime/local env
+.env
+.env.*
+!.env.example
+
+# Logs and temp files
+*.log
+*.tmp
+*.swp
+
+# Python cache
+__pycache__/
+*.pyc
+.planning/tmp/
