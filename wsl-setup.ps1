@@ -120,6 +120,12 @@ if (-not $bootstrapMode) {
     exit 1
 }
 
+$targetExists = $existingDistros -contains $targetDistro
+if ($bootstrapMode -eq "replace-existing" -and -not $targetExists) {
+    Write-Host "replace-existing is unavailable because $targetDistroLabel was not detected in preflight state." -ForegroundColor Red
+    exit 1
+}
+
 switch ($bootstrapMode) {
     "create-new" {
         Ensure-CreateNewPath -WslInstalled $wslPackageInstalled

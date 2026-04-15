@@ -26,7 +26,10 @@ Decimal phases appear between their surrounding integers in numeric order.
   1. When the bootstrap starts on a machine with existing WSL state, the user is shown the detected state before any uninstall or reset action is available.
   2. Any uninstall or reset path requires an explicit user confirmation step before execution.
   3. A user who does not confirm a destructive option can continue with a non-destructive setup path.
-**Plans**: TBD
+**Plans**: 1 plan
+
+Plans:
+- [ ] 01-01-PLAN.md — Harden Windows bootstrap eligibility/confirmation guardrails and document the safety flow.
 
 ### Phase 2: Script Consolidation and Dependency Refresh
 **Goal**: Users can rerun setup safely and receive a current Node LTS default without cleanup work.
@@ -52,6 +55,6 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Windows Bootstrap Hardening | 0/TBD | Not started | - |
+| 1. Windows Bootstrap Hardening | 0/1 | Not started | - |
 | 2. Script Consolidation and Dependency Refresh | 0/TBD | Not started | - |
 | 3. Documentation and Recovery Validation | 0/TBD | Not started | - |

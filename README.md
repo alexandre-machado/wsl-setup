@@ -34,6 +34,14 @@ You can install WSL and run the setup directly from Windows with one command (no
 irm https://raw.githubusercontent.com/alexandre-machado/wsl-setup/main/wsl-setup.ps1 | iex
 ```
 
+When this bootstrap runs, it prints a **preflight summary** first (WSL package status, existing distros, and which paths are available), then asks for one mode:
+
+- `create-new` (default): prepares WSL and ensures `Ubuntu-24.04` exists.
+- `use-existing`: keeps current distro(s) without destructive actions.
+- `replace-existing`: destructive path and only allowed when `Ubuntu-24.04` already exists.
+
+`replace-existing` always requires explicit `Y` confirmation before unregister/reset actions. If you decline, it continues with a non-destructive path.
+
 ### Install WSL
 
 If you do not already have `WSL`, follow these steps to install. Open `Powershell` by searching for it in _Search_ and _right-clicking_ for a context menu and clicking _“Run as Administrator”_. Enter the following command:
