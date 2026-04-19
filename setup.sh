@@ -12,6 +12,9 @@ source ./scripts/user.sh
 # Install applications
 bash ./scripts/apps.sh
 
+# Apply WSL2 kernel / network tuning for AI terminals
+bash ./scripts/network-tuning.sh
+
 # Install dotfiles
 bash ./scripts/dotfiles.sh
 

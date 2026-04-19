@@ -81,6 +81,36 @@ function Ensure-CreateNewPath {
     }
 }
 
+function Install-WslConfig {
+    # Provisions %USERPROFILE%\.wslconfig from the tracked template in the
+    # repo (scripts/.wslconfig.template). Idempotent: skips if the existing
+    # file already carries the managed marker. Backs up anything else.
+    $target = Join-Path $env:USERPROFILE ".wslconfig"
+    $marker = "# managed-by: wsl-setup"
+    $templateUrl = "https://raw.githubusercontent.com/alexandre-machado/wsl-setup/main/scripts/.wslconfig.template"
+
+    if ((Test-Path $target) -and (Select-String -Path $target -Pattern $marker -Quiet)) {
+        Write-Host "Existing .wslconfig already managed by wsl-setup — leaving it in place." -ForegroundColor DarkGray
+        return
+    }
+
+    try {
+        $content = Invoke-WebRequest -UseBasicParsing -Uri $templateUrl | Select-Object -ExpandProperty Content
+    } catch {
+        Write-Host ("Falha ao baixar .wslconfig.template de {0}: {1}" -f $templateUrl, $_.Exception.Message) -ForegroundColor Red
+        exit 1
+    }
+
+    if (Test-Path $target) {
+        $backup = "$target.bak-$(Get-Date -Format yyyyMMdd-HHmmss)"
+        Copy-Item $target $backup
+        Write-Host ("Backed up existing .wslconfig to {0}" -f $backup) -ForegroundColor DarkGray
+    }
+
+    Set-Content -Path $target -Value $content -Encoding ASCII
+    Write-Host ".wslconfig provisioned at $target (restart WSL to apply)." -ForegroundColor Green
+}
+
 function Invoke-BashHandoff {
     param(
         [string]$GitName,
@@ -176,6 +206,8 @@ switch ($bootstrapMode) {
         }
     }
 }
+
+Install-WslConfig
 
 Write-Host "1/2 WSL on Windows is installed." -ForegroundColor Green
 

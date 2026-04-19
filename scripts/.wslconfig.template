@@ -1,0 +1,28 @@
+[wsl2]
+# Mirrored mode gives Windows apps direct access to WSL services (and vice
+# versa), but it accumulates phantom eth interfaces and stresses netlink
+# buffers. Pair it with dnsTunneling + firewall to stay stable.
+networkingMode=Mirrored
+
+# DNS over the Windows resolver — more stable with VPNs / Tailscale.
+dnsTunneling=true
+
+# Respect Windows proxy settings (keeps HTTPS to AI providers consistent).
+autoProxy=true
+
+# Use the Windows firewall; avoids dual-stack iptables issues under Mirrored.
+firewall=true
+
+# Cap the VM so it can't balloon and starve the kernel of buffer pages.
+memory=16GB
+swap=8GB
+
+# Recycle the VM when idle so dead NICs get cleaned up.
+vmIdleTimeout=60000
+
+[experimental]
+hostAddressLoopback=true
+# Release memory back to Windows gradually — helps kernel buffer reuse.
+autoMemoryReclaim=gradual
+# Sparse VHD keeps the disk image from growing indefinitely.
+sparseVhd=true

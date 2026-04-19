@@ -9,6 +9,8 @@ _Check linked files to more details._
 ### Installation files
 
 - [apps.sh](scripts/apps.sh) - installs applications.
+- [network-tuning.sh](scripts/network-tuning.sh) - kernel / TCP tuning for AI terminal tools (fixes ENOBUFS freezes under Mirrored networking + Tailscale).
+- [.wslconfig.template](scripts/.wslconfig.template) - Windows-side `.wslconfig` provisioned by `wsl-setup.ps1` (Mirrored networking + DNS tunneling + memory caps).
 - [dotfiles.sh](scripts/dotfiles.sh) - installs _Oh My Zsh_, _.zshrc_ and _Git_ configs.
 - [npm.sh](scripts/npm.sh) - _Node.js_ and _npm_ settings.
 - [setup.sh](setup.sh) - main installer.
