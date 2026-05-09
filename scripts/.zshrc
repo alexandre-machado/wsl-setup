@@ -65,3 +65,13 @@ alias winhome="/mnt/c/Users/$(echo $USER)"
 
 # Open .zshrc in VSCode
 alias zshcfg="code ~/.zshrc"
+
+# >>> ctrl-word-delete >>>
+# Apaga palavra anterior com Ctrl+Backspace (varia por terminal)
+bindkey '^H' backward-kill-word
+bindkey '^?' backward-kill-word
+bindkey '^[^?' backward-kill-word
+
+# Apaga proxima palavra com Ctrl+Delete
+bindkey '^[[3;5~' kill-word
+# <<< ctrl-word-delete <<<
