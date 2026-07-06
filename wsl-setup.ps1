@@ -193,8 +193,12 @@ function Install-CloudInitUserData {
         return $false
     }
 
+    # Reserved names are rejected because this account becomes the default
+    # login user with passwordless sudo; 32 chars is useradd's limit.
+    $reservedUsers = @("root", "admin", "administrator", "daemon", "sudo", "nobody")
+
     $defaultUser = ($env:USERNAME -replace '[^a-zA-Z0-9]', '').ToLowerInvariant()
-    if ([string]::IsNullOrWhiteSpace($defaultUser) -or $defaultUser -notmatch '^[a-z_]') {
+    if ([string]::IsNullOrWhiteSpace($defaultUser) -or $defaultUser -notmatch '^[a-z_]' -or $defaultUser.Length -gt 32 -or $reservedUsers -contains $defaultUser) {
         $defaultUser = "ubuntu"
     }
     $wslUser = Read-Host "Linux username for the new $DistroName instance [default: $defaultUser]"
@@ -202,8 +206,8 @@ function Install-CloudInitUserData {
         $wslUser = $defaultUser
     }
     $wslUser = $wslUser.Trim()
-    if ($wslUser -notmatch '^[a-z_][a-z0-9_-]*$') {
-        Write-Host ("'{0}' is not a valid Linux username; using '{1}' instead." -f $wslUser, $defaultUser) -ForegroundColor Yellow
+    if ($wslUser -notmatch '^[a-z_][a-z0-9_-]*$' -or $wslUser.Length -gt 32 -or $reservedUsers -contains $wslUser) {
+        Write-Host ("'{0}' is not an acceptable Linux username (must match ^[a-z_][a-z0-9_-]*$, be at most 32 characters, and not be a reserved name such as root); using '{1}' instead." -f $wslUser, $defaultUser) -ForegroundColor Yellow
         $wslUser = $defaultUser
     }
 
@@ -216,9 +220,12 @@ function Install-CloudInitUserData {
     Write-Host $content
     Write-Host "----------------------------------------------" -ForegroundColor DarkGray
 
+    # Fail-safe confirm gate: only an explicit Y/YES (or Enter for the
+    # default) writes the file; N/NO and any unrecognized answer decline.
     $answer = Read-Host "Write this user-data file? [Y/N] (default: Y)"
-    if (-not [string]::IsNullOrWhiteSpace($answer) -and $answer.Trim().ToUpperInvariant() -eq "N") {
-        Write-Host "Skipping cloud-init at your request; $DistroName will be set up interactively as before." -ForegroundColor Yellow
+    $answer = if ($null -eq $answer) { "" } else { $answer.Trim().ToUpperInvariant() }
+    if ($answer -notin @("", "Y", "YES")) {
+        Write-Host "Skipping cloud-init (answer was not Y/YES); $DistroName will be set up interactively as before." -ForegroundColor Yellow
         return $false
     }
 
