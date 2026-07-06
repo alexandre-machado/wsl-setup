@@ -65,6 +65,25 @@ cd wsl-setup
 ./setup.sh
 ```
 
+#### Flags
+
+`setup.sh` is rerun-safe: running it again on an installed system skips work already done (no duplicated `.zshrc`, git-config, or SSH-config entries).
+
+```
+./setup.sh [--dry-run|-n] [--only <module>[,<module>...]]
+```
+
+- `--dry-run`, `-n` — prints the intended actions per module without changing anything (no installs, no file writes, and it does **not** delete the checkout).
+- `--only <modules>` — runs only the listed modules, comma-separated. Available modules: `apps`, `network-tuning`, `dotfiles`, `npm`, `ssh`, `gpg`. With `--only`, the checkout is kept afterwards (a full run removes it), and an explicit selection overrides the `SSH_DISABLED`/`GPG_DISABLED` toggles.
+
+Examples:
+
+```
+./setup.sh --dry-run                # preview everything
+./setup.sh --only dotfiles,npm      # resume a failed setup from the dotfiles step
+DRY_RUN=true bash ./scripts/ssh.sh  # dry-run a single module directly
+```
+
 ## Remote - WSL
 
 Install the [Remote - WSL](https://aka.ms/vscode-remote/download/wsl) extension in VSCode to get a better experience with `WSL`.
