@@ -12,6 +12,8 @@
 #   The defaults also set tcp_keepalive_time=7200 (2h), so idle HTTP/2
 #   streams to AI providers sit on dead NAT tunnels before the kernel
 #   notices.
+#
+# Rerun-safe: skips entirely when the target file already has this content.
 
 source ./scripts/utils.sh
 
@@ -19,7 +21,9 @@ echo_info "Installing WSL AI-terminal network tuning..."
 
 SYSCTL_FILE="/etc/sysctl.d/99-wsl-ai-tuning.conf"
 
-sudo tee "$SYSCTL_FILE" > /dev/null <<'EOF'
+# Desired content held in a variable: no temp-file write under --dry-run.
+# (read -d '' returns non-zero at EOF by design; best-effort script.)
+read -r -d '' SYSCTL_CONTENT <<'EOF'
 # WSL2 tuning for AI terminal tools (Claude Code, Copilot, Gemini)
 # Managed by https://github.com/alexandre-machado/wsl-setup
 
@@ -49,6 +53,14 @@ net.ipv4.tcp_tw_reuse = 1
 net.ipv4.tcp_mtu_probing = 1
 EOF
 
-sudo sysctl -p "$SYSCTL_FILE" > /dev/null
-
-echo_success "Network tuning applied ($SYSCTL_FILE)."
+if printf '%s\n' "$SYSCTL_CONTENT" | cmp -s - "$SYSCTL_FILE"; then
+  echo_info "Network tuning already applied ($SYSCTL_FILE) - skipping."
+elif [ "$DRY_RUN" = true ]; then
+  echo_dry "sudo tee $SYSCTL_FILE (write kernel/TCP tuning config)"
+  echo_dry "sudo sysctl -p $SYSCTL_FILE"
+else
+  printf '%s\n' "$SYSCTL_CONTENT" | sudo tee "$SYSCTL_FILE" > /dev/null
+  sudo chmod 644 "$SYSCTL_FILE"
+  sudo sysctl -p "$SYSCTL_FILE" > /dev/null
+  echo_success "Network tuning applied ($SYSCTL_FILE)."
+fi
