@@ -28,7 +28,8 @@ if [ "$DRY_RUN" != true ]; then
   mkdir -p "${HOME}/.ssh"
   touch "$SSH_CONFIG"
 fi
-if grep -qsF "IgnoreUnknown UseKeychain" "$SSH_CONFIG"; then
+# Exact whole-line match (-x): a commented-out variant must not skip the append
+if grep -qsxF " IgnoreUnknown UseKeychain" "$SSH_CONFIG"; then
   echo_info "Host block already in ${SSH_CONFIG} - skipping append."
 elif [ "$DRY_RUN" = true ]; then
   echo_dry "append Host block (AddKeysToAgent/UseKeychain) to ${SSH_CONFIG}"

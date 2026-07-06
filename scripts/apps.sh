@@ -18,8 +18,9 @@ run sudo apt install -y build-essential
 # Common packages
 run sudo apt install -y apt-transport-https ca-certificates curl gawk ssh-askpass tree unzip wget zsh
 
-# Git (guard: only add the PPA once)
-if grep -rqs "git-core/ppa" /etc/apt/sources.list /etc/apt/sources.list.d/ 2>/dev/null; then
+# Git (guard: only add the PPA once — check active source files only,
+# so leftover *.save / *.distUpgrade copies don't suppress the setup)
+if grep -qs "git-core/ppa" /etc/apt/sources.list /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources 2>/dev/null; then
   echo_info "git-core PPA already configured - skipping."
 else
   run sudo add-apt-repository -y ppa:git-core/ppa
@@ -28,7 +29,7 @@ fi
 run sudo apt install -y git
 
 # Nodejs (guard: only add the NodeSource repository once)
-if ls /etc/apt/sources.list.d/nodesource* > /dev/null 2>&1; then
+if ls /etc/apt/sources.list.d/nodesource*.list /etc/apt/sources.list.d/nodesource*.sources > /dev/null 2>&1; then
   echo_info "NodeSource repository already configured - skipping."
 elif [ "$DRY_RUN" = true ]; then
   echo_dry "curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -"

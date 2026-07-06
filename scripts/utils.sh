@@ -69,9 +69,11 @@ git_config_add_once() {
 }
 
 # Append a line to a file only if it is not already there.
+# Exact whole-line match (-x): a commented/partial variant must not
+# silently suppress the append.
 append_once() {
   local file="$1" line="$2"
-  if grep -qsF "$line" "$file"; then
+  if grep -qxF "$line" "$file" 2> /dev/null; then
     echo_info "Already in ${file} - skipping append."
   elif [ "$DRY_RUN" = true ]; then
     echo_dry "append to ${file}: ${line}"

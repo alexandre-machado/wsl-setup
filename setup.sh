@@ -7,7 +7,12 @@
 # Usage: ./setup.sh [--dry-run|-n] [--only <module>[,<module>...]]
 # Modules: apps, network-tuning, dotfiles, npm, ssh, gpg
 
-DRY_RUN=false
+# Honor an env-provided DRY_RUN (e.g. DRY_RUN=true ./setup.sh) — never
+# silently downgrade it to a real run. Normalize truthy spellings.
+case "${DRY_RUN:-false}" in
+  true|1|yes) DRY_RUN=true ;;
+  *)          DRY_RUN=false ;;
+esac
 ONLY=""
 ALL_MODULES="apps network-tuning dotfiles npm ssh gpg"
 
@@ -24,8 +29,15 @@ usage() {
 while [ $# -gt 0 ]; do
   case "$1" in
     --dry-run|-n) DRY_RUN=true ;;
-    --only)       shift; ONLY="$1" ;;
-    --only=*)     ONLY="${1#--only=}" ;;
+    --only)       shift
+                  if [ $# -eq 0 ] || [ -z "$1" ]; then
+                    echo "--only requires a value (available: ${ALL_MODULES// /, })"; exit 1
+                  fi
+                  ONLY="$1" ;;
+    --only=*)     ONLY="${1#--only=}"
+                  if [ -z "$ONLY" ]; then
+                    echo "--only requires a value (available: ${ALL_MODULES// /, })"; exit 1
+                  fi ;;
     --help|-h)    usage; exit 0 ;;
     *)            echo "Unknown option: $1"; usage; exit 1 ;;
   esac
@@ -106,7 +118,7 @@ if [ -z "$ONLY" ]; then
   echo_info "Removing unnecessary files..."
   sudo apt -y autoremove
   rm -rf ../scripts.zip
-  rm -rf ${DOTFILES_DIRECTORY}
+  rm -rf "${DOTFILES_DIRECTORY}"
 fi
 
 # Finish
