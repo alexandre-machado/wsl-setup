@@ -165,6 +165,86 @@ function Ensure-WslPackageInstalled {
     Write-Host "WSL instalado via winget." -ForegroundColor Green
 }
 
+function Install-CloudInitUserData {
+    # Renders scripts/cloud-init.user-data.template into
+    # %USERPROFILE%\.cloud-init\<distro>.user-data so a brand-new instance is
+    # pre-provisioned (user, locale, base packages) on first boot.
+    # Official mechanism: https://documentation.ubuntu.com/wsl/latest/howto/cloud-init/
+    # Every host-side write is printed before it happens; the rendered file is
+    # shown to the user and requires confirmation. Returns $true when the
+    # user-data file is in place, $false when cloud-init should be skipped.
+    param([string]$DistroName)
+
+    if ($DistroName -notmatch '^Ubuntu') {
+        Write-Host "cloud-init user-data is only honored by Ubuntu WSL images; skipping it for $DistroName. The instance will boot unprovisioned and rely on setup.sh alone." -ForegroundColor Yellow
+        return $false
+    }
+
+    $cloudInitDir = Join-Path $env:USERPROFILE ".cloud-init"
+    $target = Join-Path $cloudInitDir "$DistroName.user-data"
+    $marker = "# managed-by: wsl-setup"
+    $templateUrl = "https://raw.githubusercontent.com/alexandre-machado/wsl-setup/main/scripts/cloud-init.user-data.template"
+
+    try {
+        $template = Invoke-WebRequest -UseBasicParsing -Uri $templateUrl | Select-Object -ExpandProperty Content
+    } catch {
+        Write-Host ("Falha ao baixar cloud-init.user-data.template de {0}: {1}" -f $templateUrl, $_.Exception.Message) -ForegroundColor Yellow
+        Write-Host "Continuing without cloud-init; the instance will be set up interactively as before." -ForegroundColor Yellow
+        return $false
+    }
+
+    # Reserved names are rejected because this account becomes the default
+    # login user with passwordless sudo; 32 chars is useradd's limit.
+    $reservedUsers = @("root", "admin", "administrator", "daemon", "sudo", "nobody")
+
+    $defaultUser = ($env:USERNAME -replace '[^a-zA-Z0-9]', '').ToLowerInvariant()
+    if ([string]::IsNullOrWhiteSpace($defaultUser) -or $defaultUser -notmatch '^[a-z_]' -or $defaultUser.Length -gt 32 -or $reservedUsers -contains $defaultUser) {
+        $defaultUser = "ubuntu"
+    }
+    $wslUser = Read-Host "Linux username for the new $DistroName instance [default: $defaultUser]"
+    if ([string]::IsNullOrWhiteSpace($wslUser)) {
+        $wslUser = $defaultUser
+    }
+    $wslUser = $wslUser.Trim()
+    if ($wslUser -notmatch '^[a-z_][a-z0-9_-]*$' -or $wslUser.Length -gt 32 -or $reservedUsers -contains $wslUser) {
+        Write-Host ("'{0}' is not an acceptable Linux username (must match ^[a-z_][a-z0-9_-]*$, be at most 32 characters, and not be a reserved name such as root); using '{1}' instead." -f $wslUser, $defaultUser) -ForegroundColor Yellow
+        $wslUser = $defaultUser
+    }
+
+    $content = $template -replace '__USERNAME__', $wslUser
+
+    Write-Host ""
+    Write-Host "=== cloud-init user-data (host-side write) ===" -ForegroundColor Cyan
+    Write-Host ("The following file will be written to `"{0}`":" -f $target)
+    Write-Host "----------------------------------------------" -ForegroundColor DarkGray
+    Write-Host $content
+    Write-Host "----------------------------------------------" -ForegroundColor DarkGray
+
+    # Fail-safe confirm gate: only an explicit Y/YES (or Enter for the
+    # default) writes the file; N/NO and any unrecognized answer decline.
+    $answer = Read-Host "Write this user-data file? [Y/N] (default: Y)"
+    $answer = if ($null -eq $answer) { "" } else { $answer.Trim().ToUpperInvariant() }
+    if ($answer -notin @("", "Y", "YES")) {
+        Write-Host "Skipping cloud-init (answer was not Y/YES); $DistroName will be set up interactively as before." -ForegroundColor Yellow
+        return $false
+    }
+
+    if (-not (Test-Path -LiteralPath $cloudInitDir)) {
+        Write-Host ("Creating directory {0}" -f $cloudInitDir)
+        New-Item -ItemType Directory -Path $cloudInitDir -Force | Out-Null
+    }
+
+    if ((Test-Path -LiteralPath $target) -and -not (Select-String -Path $target -Pattern $marker -Quiet)) {
+        $backup = "$target.bak-$(Get-Date -Format yyyyMMdd-HHmmss)"
+        Copy-Item -LiteralPath $target -Destination $backup
+        Write-Host ("Backed up existing unmanaged user-data to {0}" -f $backup) -ForegroundColor DarkGray
+    }
+
+    Set-Content -Path $target -Value $content -Encoding ASCII
+    Write-Host ("cloud-init user-data written to {0}" -f $target) -ForegroundColor Green
+    return $true
+}
+
 function Ensure-CreateNewPath {
     param([bool]$WslInstalled)
 
@@ -178,11 +258,42 @@ function Ensure-CreateNewPath {
 
     $existingDistros = Get-WslDistroNames
     if (-not ($existingDistros -contains $targetDistro)) {
-        wsl --install -d $targetDistro
-        if ($LASTEXITCODE -ne 0) {
-            Write-Host "Falha ao instalar $targetDistro." -ForegroundColor Red
-            exit 1
+        # cloud-init only provisions instances that have never been launched,
+        # so the user-data file must exist before the first boot and the
+        # install must use --no-launch.
+        $cloudInitEnabled = Install-CloudInitUserData -DistroName $targetDistro
+
+        if ($cloudInitEnabled) {
+            wsl --install -d $targetDistro --no-launch
+            if ($LASTEXITCODE -ne 0) {
+                Write-Host "Falha ao instalar $targetDistro." -ForegroundColor Red
+                exit 1
+            }
+
+            Write-Host "First boot of $targetDistro — waiting for cloud-init to finish (this can take several minutes)..." -ForegroundColor Cyan
+            wsl -d $targetDistro -u root -- cloud-init status --wait
+            $cloudInitExit = $LASTEXITCODE
+            if ($cloudInitExit -eq 0) {
+                Write-Host "cloud-init reports: provisioning completed successfully." -ForegroundColor Green
+            } elseif ($cloudInitExit -eq 2) {
+                Write-Host "cloud-init reports: done, with recoverable errors. Inspect with: wsl -d $targetDistro -u root -- cloud-init status --long" -ForegroundColor Yellow
+            } else {
+                Write-Host "cloud-init status --wait exited with code $cloudInitExit. Provisioning may be incomplete; inspect with: wsl -d $targetDistro -u root -- cloud-init status --long" -ForegroundColor Yellow
+                Write-Host "Continuing — setup.sh will still run, but the default user/locale/base packages may be missing." -ForegroundColor Yellow
+            }
+
+            # /etc/wsl.conf ([user] default=...) written by cloud-init only
+            # takes effect after the distro is restarted.
+            wsl --terminate $targetDistro
+        } else {
+            wsl --install -d $targetDistro
+            if ($LASTEXITCODE -ne 0) {
+                Write-Host "Falha ao instalar $targetDistro." -ForegroundColor Red
+                exit 1
+            }
         }
+    } else {
+        Write-Host "$targetDistro already exists; skipping install (cloud-init only provisions brand-new instances)." -ForegroundColor DarkGray
     }
 
     wsl --set-default $targetDistro
