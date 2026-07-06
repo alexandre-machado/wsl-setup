@@ -19,11 +19,24 @@ source ./scripts/utils.sh
 
 echo_info "Provisioning /etc/wsl.conf (systemd, default user)..."
 
-# Env-overridable so the merge logic can be exercised against a scratch file.
-WSL_CONF="${WSL_CONF:-/etc/wsl.conf}"
+# Target override is a TEST-ONLY hook: honored solely when WSL_CONF_TEST=1,
+# so a stray WSL_CONF env var can never retarget the sudo root-write.
+if [ "${WSL_CONF_TEST:-0}" = "1" ] && [ -n "${WSL_CONF:-}" ]; then
+  echo_warning "wsl.conf: WSL_CONF_TEST=1 - targeting ${WSL_CONF} instead of /etc/wsl.conf."
+else
+  WSL_CONF="/etc/wsl.conf"
+fi
 WSL_CONF_TEMPLATE="${DOTFILES_DIRECTORY}/scripts/wsl.conf.template"
-WSL_CONF_USER="$(id -un)"
 WSL_CONF_CHANGED=false
+
+# Validate the invoking username before substituting it into a root-owned
+# config; on mismatch, keys needing __USERNAME__ are warned about and skipped.
+WSL_CONF_USER="$(id -un)"
+WSL_CONF_USER_VALID=true
+if ! printf '%s' "$WSL_CONF_USER" | grep -Eq '^[a-z_][a-z0-9_-]{0,31}$'; then
+  WSL_CONF_USER_VALID=false
+  echo_warning "wsl.conf: username '${WSL_CONF_USER}' fails validation (^[a-z_][a-z0-9_-]{0,31}\$) - __USERNAME__ keys will be skipped."
+fi
 
 # True when [section] already contains an (uncommented) `key=` entry.
 wslconf_has_key() {
@@ -37,17 +50,26 @@ wslconf_has_key() {
       next
     }
     in_section {
+      # Literal key comparison (index/substr, no regex) so template keys
+      # containing regex metacharacters can never break matching.
       line = $0
       sub(/^[[:space:]]+/, "", line)
-      if (line ~ ("^" key "[[:space:]]*=")) { found = 1; exit }
+      eq = index(line, "=")
+      if (eq > 0) {
+        k = substr(line, 1, eq - 1)
+        sub(/[[:space:]]+$/, "", k)
+        if (k == key) { found = 1; exit }
+      }
     }
     END { exit found ? 0 : 1 }
   ' "$WSL_CONF"
 }
 
 # Add `key=value` under [section], only when the key is missing (see policy
-# above). Writing /etc requires sudo, so the merged content is rebuilt with
-# awk and written back via `sudo tee`.
+# above). The merged result is fully rendered to a temp file FIRST, then
+# atomically installed with `sudo install` — never `awk file | sudo tee
+# same-file`, which truncates the file awk is still reading and can wipe
+# pre-existing content (including cloud-init's [user] block).
 wslconf_add_missing() {
   local section="$1" key="$2" value="$3"
   if wslconf_has_key "$section" "$key"; then
@@ -56,11 +78,16 @@ wslconf_add_missing() {
   fi
   WSL_CONF_CHANGED=true
   if [ "$DRY_RUN" = true ]; then
-    echo_dry "sudo tee ${WSL_CONF} (add '${key}=${value}' under [${section}])"
+    echo_dry "sudo install -m 644 <merged temp> ${WSL_CONF} (add '${key}=${value}' under [${section}])"
     return 0
   fi
-  local existing="/dev/null"
+  local existing="/dev/null" tmp
   [ -f "$WSL_CONF" ] && existing="$WSL_CONF"
+  tmp="$(mktemp)" || {
+    echo_warning "wsl.conf: mktemp failed - skipping [${section}] ${key}."
+    return 1
+  }
+  # Render the merge completely before any sudo touch of the target.
   awk -v section="$section" -v key="$key" -v value="$value" '
     {
       print
@@ -77,8 +104,13 @@ wslconf_add_missing() {
         print key "=" value
       }
     }
-  ' "$existing" | sudo tee "$WSL_CONF" > /dev/null
-  sudo chmod 644 "$WSL_CONF"
+  ' "$existing" > "$tmp" || {
+    echo_warning "wsl.conf: merge render failed - leaving ${WSL_CONF} untouched."
+    rm -f "$tmp"
+    return 1
+  }
+  sudo install -m 644 "$tmp" "$WSL_CONF"
+  rm -f "$tmp"
   echo_success "wsl.conf: added [${section}] ${key}=${value}."
 }
 
@@ -98,7 +130,16 @@ while IFS= read -r wslconf_line || [ -n "$wslconf_line" ]; do
     *=*)
       wslconf_key="${wslconf_line%%=*}"
       wslconf_value="${wslconf_line#*=}"
-      wslconf_value="${wslconf_value//__USERNAME__/${WSL_CONF_USER}}"
+      case "$wslconf_value" in
+        *__USERNAME__*)
+          if [ "$WSL_CONF_USER_VALID" = true ]; then
+            wslconf_value="${wslconf_value//__USERNAME__/${WSL_CONF_USER}}"
+          else
+            echo_warning "wsl.conf: skipping [${wslconf_section}] ${wslconf_key} (invalid username)."
+            continue
+          fi
+          ;;
+      esac
       wslconf_add_missing "$wslconf_section" "$wslconf_key" "$wslconf_value"
       ;;
   esac
