@@ -44,6 +44,23 @@ When this bootstrap runs, it prints a **preflight summary** first (WSL package s
 
 `replace-existing` always requires explicit `Y` confirmation before unregister/reset actions. If you decline, it continues with a non-destructive path.
 
+#### Backup before `replace-existing` (`wsl --export`)
+
+Before anything destructive runs, `replace-existing` offers to snapshot the distro with `wsl --export` (default target: `%USERPROFILE%\wsl-backups\<distro>-<date>.tar`, path is customizable). The prompt shows the estimated backup size and the free space on the target drive.
+
+- If the export **fails**, the destructive path is aborted — nothing is unregistered.
+- If you **decline** the backup, you still have to pass the explicit `Y` confirmation before any unregister happens (and the confirmation prompt reminds you that no backup was taken).
+
+To restore a backup later:
+
+```pwsh
+wsl --import Ubuntu-24.04 <install-folder> "%USERPROFILE%\wsl-backups\Ubuntu-24.04-<date>.tar"
+# e.g.
+wsl --import Ubuntu-24.04 "%LOCALAPPDATA%\wsl\Ubuntu-24.04" "%USERPROFILE%\wsl-backups\Ubuntu-24.04-20260706-120000.tar"
+```
+
+Note: `wsl --import` fails while a distro with the same name is still registered. Either import under a new name (e.g. `wsl --import Ubuntu-24.04-restored ...`) or unregister the existing one first with `wsl --unregister Ubuntu-24.04` (destructive — that distro's filesystem is deleted).
+
 ### Install WSL
 
 If you do not already have `WSL`, follow these steps to install. Open `Powershell` by searching for it in _Search_ and _right-clicking_ for a context menu and clicking _“Run as Administrator”_. Enter the following command:

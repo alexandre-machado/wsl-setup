@@ -34,7 +34,118 @@ function Write-PreflightSummary {
     Write-Host "- create-new (default): Yes"
     Write-Host ("- use-existing: {0}" -f ($(if ($hasAnyDistro) { "Yes" } else { "No" })))
     Write-Host ("- replace-existing: {0}" -f ($(if ($targetExists) { "Yes" } else { "No" })))
+    if ($targetExists) {
+        Write-Host ("  (replace-existing offers a 'wsl --export' backup of {0} before any unregister)" -f $targetDistro) -ForegroundColor DarkGray
+    }
     Write-Host ""
+}
+
+function Get-DistroDiskSizeBytes {
+    # Best-effort size of the distro's virtual disk (ext4.vhdx), used to
+    # estimate how large a 'wsl --export' tar will be. Returns $null when
+    # the size cannot be determined.
+    param([string]$DistroName)
+
+    try {
+        $lxssKeys = Get-ChildItem "HKCU:\Software\Microsoft\Windows\CurrentVersion\Lxss" -ErrorAction Stop
+        foreach ($key in $lxssKeys) {
+            $props = Get-ItemProperty -Path $key.PSPath -ErrorAction SilentlyContinue
+            if ($props.DistributionName -eq $DistroName -and $props.BasePath) {
+                $basePath = $props.BasePath -replace '^\\\\\?\\', ''
+                $vhdx = Join-Path $basePath "ext4.vhdx"
+                if (Test-Path $vhdx) {
+                    return (Get-Item $vhdx).Length
+                }
+            }
+        }
+    } catch {
+        return $null
+    }
+    return $null
+}
+
+function Invoke-WslDistroBackup {
+    # Offers a 'wsl --export' snapshot before the destructive replace path.
+    # Returns $true if a backup was exported, $false if the user declined.
+    # Fail-safe: an export failure aborts the whole destructive path (exit 1)
+    # so 'wsl --unregister' is never reached without a good backup or an
+    # explicit decline.
+    param([string]$DistroName)
+
+    $dateStamp = Get-Date -Format yyyyMMdd-HHmmss
+    $defaultDir = Join-Path $env:USERPROFILE "wsl-backups"
+    $defaultPath = Join-Path $defaultDir "$DistroName-$dateStamp.tar"
+
+    Write-Host ""
+    Write-Host "=== Backup before replace ===" -ForegroundColor Cyan
+    Write-Host "replace-existing will unregister $DistroName, permanently deleting its filesystem."
+    Write-Host "A 'wsl --export' snapshot lets you restore it later with 'wsl --import'."
+
+    $diskSize = Get-DistroDiskSizeBytes -DistroName $DistroName
+    if ($diskSize) {
+        Write-Host ("Estimated backup size: up to ~{0:N1} GB (current virtual disk size)." -f ($diskSize / 1GB))
+    } else {
+        Write-Host "Estimated backup size: could not be determined; expect several GB (roughly the distro's disk usage)."
+    }
+    try {
+        $driveName = (Split-Path -Qualifier $defaultPath).TrimEnd(':')
+        $freeBytes = (Get-PSDrive -Name $driveName -ErrorAction Stop).Free
+        Write-Host ("Free space on {0}: {1:N1} GB." -f (Split-Path -Qualifier $defaultPath), ($freeBytes / 1GB))
+    } catch {
+        Write-Host "Free space on the target drive could not be determined."
+    }
+
+    $answer = Read-Host "Export a backup of $DistroName before replacing it? [Y/N] (default: Y)"
+    if (-not [string]::IsNullOrWhiteSpace($answer) -and $answer.Trim().ToUpperInvariant() -eq "N") {
+        Write-Host "Skipping backup at your request. $DistroName will NOT be recoverable after unregister." -ForegroundColor Yellow
+        return $false
+    }
+
+    $backupPath = Read-Host "Backup file path [default: $defaultPath]"
+    if ([string]::IsNullOrWhiteSpace($backupPath)) {
+        $backupPath = $defaultPath
+    }
+
+    # Normalize to an absolute path before handing it to wsl.exe (PowerShell
+    # and wsl.exe do not share relative-path/wildcard semantics).
+    if (-not [System.IO.Path]::IsPathRooted($backupPath)) {
+        $backupPath = Join-Path (Get-Location).Path $backupPath
+    }
+    $backupPath = [System.IO.Path]::GetFullPath($backupPath)
+
+    $backupDir = Split-Path -Parent $backupPath
+    if ($backupDir -and -not (Test-Path -LiteralPath $backupDir)) {
+        New-Item -ItemType Directory -Path $backupDir -Force | Out-Null
+    }
+
+    # Never silently clobber a prior backup.
+    if (Test-Path -LiteralPath $backupPath) {
+        $overwrite = Read-Host "A file already exists at `"$backupPath`". Overwrite it? [Y/N] (default: N)"
+        if ([string]::IsNullOrWhiteSpace($overwrite) -or $overwrite.Trim().ToUpperInvariant() -ne "Y") {
+            $suffix = 1
+            $baseName = [System.IO.Path]::GetFileNameWithoutExtension($backupPath)
+            $extension = [System.IO.Path]::GetExtension($backupPath)
+            do {
+                $backupPath = Join-Path $backupDir ("{0}-{1}{2}" -f $baseName, $suffix, $extension)
+                $suffix++
+            } while (Test-Path -LiteralPath $backupPath)
+            Write-Host ("Keeping the existing file; exporting to `"{0}`" instead." -f $backupPath) -ForegroundColor Yellow
+        }
+    }
+
+    Write-Host "Running: wsl --export $DistroName `"$backupPath`" (this can take several minutes)..."
+    wsl --export $DistroName $backupPath
+    if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $backupPath)) {
+        Write-Host "wsl --export failed (exit code $LASTEXITCODE). Aborting the destructive replace-existing path; nothing was unregistered." -ForegroundColor Red
+        Write-Host "Free up disk space or export manually, then re-run the bootstrap." -ForegroundColor Red
+        exit 1
+    }
+
+    Write-Host ("Backup complete: {0}" -f $backupPath) -ForegroundColor Green
+    Write-Host "To restore this distro later, run:" -ForegroundColor Green
+    Write-Host ("  wsl --import {0} <install-folder> `"{1}`"" -f $DistroName, $backupPath)
+    Write-Host ("  e.g. wsl --import {0} `"{1}`" `"{2}`"" -f $DistroName, (Join-Path $env:LOCALAPPDATA "wsl\$DistroName"), $backupPath)
+    return $true
 }
 
 function Ensure-WslPackageInstalled {
@@ -169,7 +280,10 @@ switch ($bootstrapMode) {
         Write-Host "Using existing WSL distro(s) without destructive changes." -ForegroundColor Green
     }
     "replace-existing" {
-        $confirmation = Read-Host "Confirm replace of the existing Ubuntu distro with $targetDistro? [Y/N]"
+        $backupTaken = Invoke-WslDistroBackup -DistroName $targetDistro
+        $backupNote = if ($backupTaken) { "a backup was exported" } else { "NO backup was taken" }
+
+        $confirmation = Read-Host "Confirm replace of the existing Ubuntu distro with $targetDistro ($backupNote)? [Y/N]"
         if ($confirmation.Trim().ToUpperInvariant() -ne "Y") {
             Write-Host "No destructive fallback: continuing with the non-destructive create-new path." -ForegroundColor Yellow
             Ensure-CreateNewPath -WslInstalled $wslPackageInstalled
