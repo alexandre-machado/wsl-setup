@@ -5,7 +5,7 @@
 # Main install script
 #
 # Usage: ./setup.sh [--dry-run|-n] [--only <module>[,<module>...]]
-# Modules: apps, network-tuning, dotfiles, npm, ssh, gpg
+# Modules: apps, network-tuning, wsl-conf, dotfiles, npm, ssh, gpg
 
 # Honor an env-provided DRY_RUN (e.g. DRY_RUN=true ./setup.sh) — never
 # silently downgrade it to a real run. Normalize truthy spellings.
@@ -14,7 +14,7 @@ case "${DRY_RUN:-false}" in
   *)          DRY_RUN=false ;;
 esac
 ONLY=""
-ALL_MODULES="apps network-tuning dotfiles npm ssh gpg"
+ALL_MODULES="apps network-tuning wsl-conf dotfiles npm ssh gpg"
 
 usage() {
   echo "Usage: $0 [--dry-run|-n] [--only <module>[,<module>...]]"
@@ -85,6 +85,9 @@ run_module apps
 
 # Apply WSL2 kernel / network tuning for AI terminals
 run_module network-tuning
+
+# Provision /etc/wsl.conf (systemd, default user) — add-missing-only merge
+run_module wsl-conf
 
 # Install dotfiles
 run_module dotfiles

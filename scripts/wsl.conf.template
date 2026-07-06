@@ -1,0 +1,27 @@
+# /etc/wsl.conf — in-distro WSL settings
+# Managed by https://github.com/alexandre-machado/wsl-setup (scripts/wsl-conf.sh)
+# Docs: https://learn.microsoft.com/en-us/windows/wsl/wsl-config
+#
+# Replacement policy (deliberate): MERGE / ADD-MISSING-ONLY.
+# wsl-conf.sh only adds keys from this template that are absent from
+# /etc/wsl.conf. Existing keys and sections are never modified or removed —
+# this preserves user-added settings and does not fight the [user] section
+# that cloud-init writes on brand-new instances
+# (scripts/cloud-init.user-data.template). To override a value, edit
+# /etc/wsl.conf directly; reruns will not clobber it.
+#
+# __USERNAME__ is replaced with the invoking user at apply time; do not
+# commit a rendered copy.
+#
+# No [boot] command= entries on purpose: nothing in this toolkit needs a
+# root-run boot hook, and every entry there executes on each distro start.
+
+[boot]
+# systemd is required for snap, systemctl-managed services (Docker, Tailscale)
+# and matches Ubuntu's modern WSL defaults.
+systemd=true
+
+[user]
+# Log in as the provisioning user instead of root. cloud-init already sets
+# this on new instances; the add-missing policy leaves that value alone.
+default=__USERNAME__
