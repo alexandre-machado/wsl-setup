@@ -59,6 +59,8 @@ wsl --import Ubuntu-24.04 <install-folder> "%USERPROFILE%\wsl-backups\Ubuntu-24.
 wsl --import Ubuntu-24.04 "%LOCALAPPDATA%\wsl\Ubuntu-24.04" "%USERPROFILE%\wsl-backups\Ubuntu-24.04-20260706-120000.tar"
 ```
 
+Note: `wsl --import` fails while a distro with the same name is still registered. Either import under a new name (e.g. `wsl --import Ubuntu-24.04-restored ...`) or unregister the existing one first with `wsl --unregister Ubuntu-24.04` (destructive — that distro's filesystem is deleted).
+
 ### Install WSL
 
 If you do not already have `WSL`, follow these steps to install. Open `Powershell` by searching for it in _Search_ and _right-clicking_ for a context menu and clicking _“Run as Administrator”_. Enter the following command:

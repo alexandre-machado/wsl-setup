@@ -106,14 +106,36 @@ function Invoke-WslDistroBackup {
         $backupPath = $defaultPath
     }
 
+    # Normalize to an absolute path before handing it to wsl.exe (PowerShell
+    # and wsl.exe do not share relative-path/wildcard semantics).
+    if (-not [System.IO.Path]::IsPathRooted($backupPath)) {
+        $backupPath = Join-Path (Get-Location).Path $backupPath
+    }
+    $backupPath = [System.IO.Path]::GetFullPath($backupPath)
+
     $backupDir = Split-Path -Parent $backupPath
-    if ($backupDir -and -not (Test-Path $backupDir)) {
+    if ($backupDir -and -not (Test-Path -LiteralPath $backupDir)) {
         New-Item -ItemType Directory -Path $backupDir -Force | Out-Null
+    }
+
+    # Never silently clobber a prior backup.
+    if (Test-Path -LiteralPath $backupPath) {
+        $overwrite = Read-Host "A file already exists at `"$backupPath`". Overwrite it? [Y/N] (default: N)"
+        if ([string]::IsNullOrWhiteSpace($overwrite) -or $overwrite.Trim().ToUpperInvariant() -ne "Y") {
+            $suffix = 1
+            $baseName = [System.IO.Path]::GetFileNameWithoutExtension($backupPath)
+            $extension = [System.IO.Path]::GetExtension($backupPath)
+            do {
+                $backupPath = Join-Path $backupDir ("{0}-{1}{2}" -f $baseName, $suffix, $extension)
+                $suffix++
+            } while (Test-Path -LiteralPath $backupPath)
+            Write-Host ("Keeping the existing file; exporting to `"{0}`" instead." -f $backupPath) -ForegroundColor Yellow
+        }
     }
 
     Write-Host "Running: wsl --export $DistroName `"$backupPath`" (this can take several minutes)..."
     wsl --export $DistroName $backupPath
-    if ($LASTEXITCODE -ne 0 -or -not (Test-Path $backupPath)) {
+    if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $backupPath)) {
         Write-Host "wsl --export failed (exit code $LASTEXITCODE). Aborting the destructive replace-existing path; nothing was unregistered." -ForegroundColor Red
         Write-Host "Free up disk space or export manually, then re-run the bootstrap." -ForegroundColor Red
         exit 1
