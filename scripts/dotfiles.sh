@@ -36,6 +36,7 @@ fi
 
 # Move permanent files to Home directory
 replace "./scripts/.zshrc" ".zshrc"
+replace "./scripts/.tmux.conf" ".tmux.conf"
 
 # Set Zsh as default shell in Linux (guard: skip when already the login shell)
 if [ "$(getent passwd "$USER" | cut -d: -f7)" = "$(which zsh)" ]; then

@@ -9,8 +9,9 @@ ZSH_THEME="robbyrussell"
 # oh-my-zsh path
 export ZSH=$HOME/.oh-my-zsh
 
-# Support 256 colors path
-export TERM="xterm-256color"
+# Support 256 colors (skip inside tmux: tmux sets its own $TERM, and
+# overriding it here garbles rendering in tmux panes)
+[ -z "$TMUX" ] && export TERM="xterm-256color"
 
 # Add user-local binaries to PATH (for lazydocker, etc.)
 export PATH="$HOME/.local/bin:$PATH"

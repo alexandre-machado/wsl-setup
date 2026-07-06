@@ -121,6 +121,37 @@ DRY_RUN=true bash ./scripts/ssh.sh  # dry-run a single module directly
 
 Install the [Remote - WSL](https://aka.ms/vscode-remote/download/wsl) extension in VSCode to get a better experience with `WSL`.
 
+## VS Code terminal in tmux
+
+The setup installs `tmux` (`scripts/apps.sh`) and a `~/.tmux.conf` (`scripts/.tmux.conf`, with `allow-passthrough on` for clipboard/OSC integration). To make VS Code's integrated terminal land in a persistent tmux session automatically, add this to your VS Code settings (Remote [WSL] settings — `F1` → *Preferences: Open Remote Settings (WSL)* — or User settings JSON):
+
+```jsonc
+{
+  "terminal.integrated.profiles.linux": {
+    "zsh": {
+      "path": "zsh"
+    },
+    "zsh-tmux": {
+      "path": "zsh",
+      "args": ["-c", "exec tmux new-session -A -s \"vsc-${PWD##*/}\""],
+      "icon": "terminal-tmux"
+    }
+  },
+  "terminal.integrated.defaultProfile.linux": "zsh-tmux",
+  // Keep tasks and debug terminals OUT of tmux — they use this profile instead
+  // of the default one.
+  "terminal.integrated.automationProfile.linux": {
+    "path": "zsh"
+  }
+}
+```
+
+How it behaves:
+
+- **Persistent sessions per workspace** — `tmux new-session -A -s "vsc-${PWD##*/}"` attaches to (or creates) a session named after the workspace folder, e.g. `vsc-wsl-setup`. Closing the VS Code window keeps the session alive; reopening the workspace reattaches to it with scrollback and running processes intact. To really end a session, `exit` the shell inside tmux (or `tmux kill-session -t vsc-<name>`).
+- **Tasks and debug terminals are unaffected** — `terminal.integrated.automationProfile.linux` points to plain `zsh`, so VS Code tasks and debug consoles never run inside tmux. Do not remove it: without an explicit automation profile they may inherit the tmux default profile.
+- **Opt-out** — the configuration is opt-in per the settings above; nothing in the scripts touches VS Code settings. To open a one-off terminal outside tmux, pick the plain `zsh` profile from the terminal dropdown (`+` → `zsh`). To opt out entirely, set `"terminal.integrated.defaultProfile.linux": "zsh"` (or remove the settings).
+
 ## Reference
 
 - [Windows Subsystem for Linux Installation Guide for Windows](https://aka.ms/wslinstall)
