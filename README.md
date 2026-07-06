@@ -123,7 +123,7 @@ Install the [Remote - WSL](https://aka.ms/vscode-remote/download/wsl) extension 
 
 ## VS Code terminal in tmux
 
-The setup installs `tmux` (`scripts/apps.sh`) and a `~/.tmux.conf` (`scripts/.tmux.conf`, with `allow-passthrough on` for clipboard/OSC integration). To make VS Code's integrated terminal land in a persistent tmux session automatically, add this to your VS Code settings (Remote [WSL] settings — `F1` → *Preferences: Open Remote Settings (WSL)* — or User settings JSON):
+The setup installs `tmux` (`scripts/apps.sh`) and a `~/.tmux.conf` (`scripts/.tmux.conf`, with `allow-passthrough on` for clipboard/OSC integration). Note the tradeoff: `allow-passthrough on` lets programs running in a visible pane send OSC escape sequences to the host terminal (e.g. writing to the clipboard via OSC 52), so untrusted output printed in a pane can drive the outer terminal — if you don't want clipboard integration, set it to `off` in `~/.tmux.conf`. To make VS Code's integrated terminal land in a persistent tmux session automatically, add this to your VS Code settings (Remote [WSL] settings — `F1` → *Preferences: Open Remote Settings (WSL)* — or User settings JSON):
 
 ```jsonc
 {
