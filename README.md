@@ -11,6 +11,7 @@ _Check linked files to more details._
 - [apps.sh](scripts/apps.sh) - installs applications.
 - [network-tuning.sh](scripts/network-tuning.sh) - kernel / TCP tuning for AI terminal tools (fixes ENOBUFS freezes under Mirrored networking + Tailscale).
 - [.wslconfig.template](scripts/.wslconfig.template) - Windows-side `.wslconfig` provisioned by `wsl-setup.ps1` (Mirrored networking + DNS tunneling + memory caps).
+- [cloud-init.user-data.template](scripts/cloud-init.user-data.template) - cloud-init user-data rendered by `wsl-setup.ps1` for brand-new Ubuntu instances (default user, locale, base packages).
 - [dotfiles.sh](scripts/dotfiles.sh) - installs _Oh My Zsh_, _.zshrc_ and _Git_ configs.
 - [npm.sh](scripts/npm.sh) - _Node.js_ and _npm_ settings.
 - [setup.sh](setup.sh) - main installer.
@@ -38,11 +39,43 @@ irm https://raw.githubusercontent.com/alexandre-machado/wsl-setup/main/wsl-setup
 
 When this bootstrap runs, it prints a **preflight summary** first (WSL package status, existing distros, and which paths are available), then asks for one mode:
 
-- `create-new` (default): prepares WSL and ensures `Ubuntu-24.04` exists.
+- `create-new` (default): prepares WSL and ensures `Ubuntu-24.04` exists (brand-new instances are pre-provisioned via [cloud-init](#cloud-init-provisioning-of-new-instances)).
 - `use-existing`: keeps current distro(s) without destructive actions.
 - `replace-existing`: destructive path and only allowed when `Ubuntu-24.04` already exists.
 
 `replace-existing` always requires explicit `Y` confirmation before unregister/reset actions. If you decline, it continues with a non-destructive path.
+
+#### Backup before `replace-existing` (`wsl --export`)
+
+Before anything destructive runs, `replace-existing` offers to snapshot the distro with `wsl --export` (default target: `%USERPROFILE%\wsl-backups\<distro>-<date>.tar`, path is customizable). The prompt shows the estimated backup size and the free space on the target drive.
+
+- If the export **fails**, the destructive path is aborted — nothing is unregistered.
+- If you **decline** the backup, you still have to pass the explicit `Y` confirmation before any unregister happens (and the confirmation prompt reminds you that no backup was taken).
+
+To restore a backup later:
+
+```pwsh
+wsl --import Ubuntu-24.04 <install-folder> "%USERPROFILE%\wsl-backups\Ubuntu-24.04-<date>.tar"
+# e.g.
+wsl --import Ubuntu-24.04 "%LOCALAPPDATA%\wsl\Ubuntu-24.04" "%USERPROFILE%\wsl-backups\Ubuntu-24.04-20260706-120000.tar"
+```
+
+Note: `wsl --import` fails while a distro with the same name is still registered. Either import under a new name (e.g. `wsl --import Ubuntu-24.04-restored ...`) or unregister the existing one first with `wsl --unregister Ubuntu-24.04` (destructive — that distro's filesystem is deleted).
+
+#### cloud-init provisioning of new instances
+
+When `create-new` needs to install a brand-new `Ubuntu-24.04` instance, the bootstrap uses Ubuntu's officially supported [WSL cloud-init mechanism](https://documentation.ubuntu.com/wsl/latest/howto/cloud-init/) so the instance comes up pre-provisioned (default user, locale, base packages) before `setup.sh` runs:
+
+1. It renders [scripts/cloud-init.user-data.template](scripts/cloud-init.user-data.template) with the Linux username you choose at the prompt, **shows you the exact file content**, and — only after you confirm — writes it to `%USERPROFILE%\.cloud-init\Ubuntu-24.04.user-data` (the file name must match the distro name). No host-side file is written silently.
+2. It installs the distro with `wsl --install -d Ubuntu-24.04 --no-launch`. cloud-init only provisions instances that have never been launched, so the user-data file must be in place before first boot.
+3. On first boot it runs `cloud-init status --wait` inside the instance and reports the result in the progress output (exit code `0` = success, `2` = done with recoverable errors). The distro is then restarted so the `[user] default=` entry cloud-init wrote to `/etc/wsl.conf` takes effect.
+
+Notes:
+
+- cloud-init user-data is only honored by Ubuntu WSL images. For Debian (or any non-Ubuntu distro) the step is skipped with a message and the instance boots unprovisioned, relying on `setup.sh` alone.
+- Existing instances are never re-provisioned: `use-existing`, `replace-existing`, and a `create-new` run where `Ubuntu-24.04` already exists are unaffected by the user-data file (though `replace-existing` reinstalls via its own path, without cloud-init).
+- If you decline the write prompt (or the template download fails), the bootstrap falls back to the previous behavior: `wsl --install` with interactive first-launch setup.
+- An existing `Ubuntu-24.04.user-data` not managed by this repo (no `# managed-by: wsl-setup` marker) is backed up as `*.bak-<timestamp>` before being replaced.
 
 ### Install WSL
 

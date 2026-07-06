@@ -1,0 +1,34 @@
+#cloud-config
+# managed-by: wsl-setup
+# Rendered by wsl-setup.ps1 into %USERPROFILE%\.cloud-init\<distro>.user-data
+# before `wsl --install <distro> --no-launch`. Ubuntu's WSL images read this
+# file on first boot (https://documentation.ubuntu.com/wsl/latest/howto/cloud-init/)
+# and pre-provision the instance before setup.sh runs.
+# __USERNAME__ is substituted by the launcher; do not commit a rendered copy.
+
+locale: en_US.UTF-8
+
+users:
+  - name: __USERNAME__
+    gecos: __USERNAME__ (provisioned by wsl-setup)
+    groups: [adm, cdrom, dialout, dip, floppy, netdev, plugdev, sudo, video]
+    # NOPASSWD is deliberate, not cargo-cult: this user-data sets no password
+    # (no passwd/chpasswd stanza), so cloud-init creates the account with a
+    # locked password and passworded sudo would be unusable. It grants nothing
+    # the Windows host user does not already have — `wsl -d <distro> -u root`
+    # is root regardless. Matches the official Ubuntu WSL cloud-init example.
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
+
+write_files:
+  - path: /etc/wsl.conf
+    append: true
+    content: |
+      [user]
+      default=__USERNAME__
+
+package_update: true
+packages:
+  - git
+  - curl
+  - ca-certificates
