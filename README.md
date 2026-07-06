@@ -18,6 +18,7 @@ _Check linked files to more details._
 - [ssh.sh](scripts/ssh.sh) - generate _SSH_.
 - [user.sh](scripts/user.sh) - user data to configuration of _Git_ and _SSH_.
 - [utils.sh](scripts/utils.sh) - support functions for other installers.
+- [wsl-conf.sh](scripts/wsl-conf.sh) + [wsl.conf.template](scripts/wsl.conf.template) - provisions in-distro `/etc/wsl.conf` (systemd, default user) with an add-missing-only merge (see [Provisioning /etc/wsl.conf](#provisioning-etcwslconf)).
 - [.zshrc](scripts/.zshrc) - terminal configs with aliases, paths, plugins and theme (this file is permanent after installation).
 
 ## Prerequisites
@@ -107,7 +108,7 @@ cd wsl-setup
 ```
 
 - `--dry-run`, `-n` — prints the intended actions per module without changing anything (no installs, no file writes, and it does **not** delete the checkout).
-- `--only <modules>` — runs only the listed modules, comma-separated. Available modules: `apps`, `network-tuning`, `dotfiles`, `npm`, `ssh`, `gpg`. With `--only`, the checkout is kept afterwards (a full run removes it), and an explicit selection overrides the `SSH_DISABLED`/`GPG_DISABLED` toggles.
+- `--only <modules>` — runs only the listed modules, comma-separated. Available modules: `apps`, `network-tuning`, `wsl-conf`, `dotfiles`, `npm`, `ssh`, `gpg`. With `--only`, the checkout is kept afterwards (a full run removes it), and an explicit selection overrides the `SSH_DISABLED`/`GPG_DISABLED` toggles.
 
 Examples:
 
@@ -116,6 +117,23 @@ Examples:
 ./setup.sh --only dotfiles,npm      # resume a failed setup from the dotfiles step
 DRY_RUN=true bash ./scripts/ssh.sh  # dry-run a single module directly
 ```
+
+## Provisioning /etc/wsl.conf
+
+`setup.sh` (module `wsl-conf`) provisions the in-distro [/etc/wsl.conf](https://learn.microsoft.com/en-us/windows/wsl/wsl-config) from [scripts/wsl.conf.template](scripts/wsl.conf.template) — the in-distro counterpart of the Windows-side `.wslconfig` template:
+
+- `[boot] systemd=true` — required by snap and systemctl-managed services (Docker, Tailscale).
+- `[user] default=<your user>` — log in as your user instead of root.
+
+**Merge policy (add-missing-only):** the module never modifies or removes keys/sections that already exist in `/etc/wsl.conf` — it only adds template keys that are missing. So it does not fight the `[user]` section that [cloud-init](#cloud-init-provisioning-of-new-instances) writes on brand-new instances, and any value you set by hand wins over the template on reruns. To change a managed value, edit `/etc/wsl.conf` directly.
+
+After the module adds anything, it reminds you that the change only takes effect after a restart of the distro — run from Windows:
+
+```pwsh
+wsl --shutdown
+```
+
+then reopen your WSL terminal. Setup never forces this restart.
 
 ## Remote - WSL
 
