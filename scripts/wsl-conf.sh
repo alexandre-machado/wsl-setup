@@ -109,7 +109,11 @@ wslconf_add_missing() {
     rm -f "$tmp"
     return 1
   }
-  sudo install -m 644 "$tmp" "$WSL_CONF"
+  sudo install -m 644 "$tmp" "$WSL_CONF" || {
+    echo_warning "wsl.conf: install failed - ${WSL_CONF} unchanged."
+    rm -f "$tmp"
+    return 1
+  }
   rm -f "$tmp"
   echo_success "wsl.conf: added [${section}] ${key}=${value}."
 }
