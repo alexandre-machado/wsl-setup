@@ -69,7 +69,7 @@ alias zshcfg="code ~/.zshrc"
 # >>> ctrl-word-delete >>>
 # Apaga palavra anterior com Ctrl+Backspace (varia por terminal)
 bindkey '^H' backward-kill-word
-bindkey '^?' backward-kill-word
+bindkey '^?' backward-delete-char
 bindkey '^[^?' backward-kill-word
 
 # Apaga proxima palavra com Ctrl+Delete
