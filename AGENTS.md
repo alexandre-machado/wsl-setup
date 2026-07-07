@@ -64,3 +64,13 @@
 - `setup.sh` deletes its own checkout at the end
   (`rm -rf ${DOTFILES_DIRECTORY}`, set to `$PWD` in `scripts/utils.sh`) —
   debugging a live run requires a separate copy.
+- Agent probes against shared host state must be isolated: a review subagent
+  once ran `tmux kill-server` while testing and killed the user's attached
+  session. tmux experiments use an isolated socket (`tmux -L <name>`) and kill
+  only that socket's server; in general, empirical verification by read-only
+  reviewers must be side-effect-free on the host (temp dirs, PATH-stubbed
+  `sudo`, no shared daemons).
+- `awk '...' "$f" | sudo tee "$f"` truncates the file awk is still reading and
+  wipes its content most runs (caught pre-merge in PR #15). Render to a temp
+  file first, then `sudo install -m 644 "$tmp" "$f"` — and check the install's
+  exit code before printing success.
