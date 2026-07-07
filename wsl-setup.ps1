@@ -339,7 +339,7 @@ function Invoke-BashHandoff {
         [string]$GitEmail
     )
 
-    wsl ~ -e bash -lc "echo 'Starting WSL setup...' && export GIT_NAME='$GitName' && export GIT_EMAIL='$GitEmail' && git clone https://github.com/alexandre-machado/wsl-setup.git && chmod 700 wsl-setup/ -R && cd wsl-setup && ./setup.sh"
+    wsl -e bash -lc "cd ~ && echo 'Starting WSL setup...' && export GIT_NAME='$GitName' && export GIT_EMAIL='$GitEmail' && git clone https://github.com/alexandre-machado/wsl-setup.git && chmod 700 wsl-setup/ -R && cd wsl-setup && ./setup.sh"
     if ($LASTEXITCODE -ne 0) {
         Write-Host "Falha na transferência para o setup Bash." -ForegroundColor Red
         exit 1
