@@ -64,3 +64,20 @@ else
   sudo sysctl -p "$SYSCTL_FILE" > /dev/null
   echo_success "Network tuning applied ($SYSCTL_FILE)."
 fi
+
+# --- Tailscale conflict check under Mirrored mode ---------------------------
+if systemctl is-active --quiet tailscaled 2>/dev/null; then
+  # Check if Mirrored mode is active by reading the Windows-side .wslconfig
+  for wslcfg in /mnt/c/Users/*/.wslconfig; do
+    if [ -f "$wslcfg" ] && grep -Fqi "networkingMode=Mirrored" "$wslcfg"; then
+      echo_warning "Tailscale is running inside WSL, but Mirrored networking is active in Windows."
+      echo_warning "  Running Tailscale inside WSL in Mirrored mode causes routing conflicts"
+      echo_warning "  and RTNL kernel deadlocks (rtnl_dumpit hangs) that freeze WSL."
+      echo_warning "  Since WSL automatically inherits the Windows host's Tailscale connection,"
+      echo_warning "  it is highly recommended to disable the guest Tailscale agent:"
+      echo_warning "    sudo systemctl disable --now tailscaled"
+      break
+    fi
+  done
+fi
+

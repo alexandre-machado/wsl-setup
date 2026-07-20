@@ -141,7 +141,7 @@ Install the [Remote - WSL](https://aka.ms/vscode-remote/download/wsl) extension 
 
 ## VS Code terminal in tmux
 
-The setup installs `tmux` (`scripts/apps.sh`) and a `~/.tmux.conf` (`scripts/.tmux.conf`, with `allow-passthrough on` for clipboard/OSC integration). Note the tradeoff: `allow-passthrough on` lets programs running in a visible pane send OSC escape sequences to the host terminal (e.g. writing to the clipboard via OSC 52), so untrusted output printed in a pane can drive the outer terminal — if you don't want clipboard integration, set it to `off` in `~/.tmux.conf`. To make VS Code's integrated terminal land in a persistent tmux session automatically, add this to your VS Code settings (Remote [WSL] settings — `F1` → *Preferences: Open Remote Settings (WSL)* — or User settings JSON):
+The setup installs `tmux` (`scripts/apps.sh`), a `~/.tmux.conf` (`scripts/.tmux.conf`, with `allow-passthrough on` for clipboard/OSC integration), and a helper script `~/.local/bin/tmux-vscode-session` (`scripts/tmux-vscode-session.sh`) that opens a stable tmux session per repository. Note the tradeoff: `allow-passthrough on` lets programs running in a visible pane send OSC escape sequences to the host terminal (e.g. writing to the clipboard via OSC 52), so untrusted output printed in a pane can drive the outer terminal — if you don't want clipboard integration, set it to `off` in `~/.tmux.conf`. To make VS Code's integrated terminal land in a persistent tmux session automatically, add this to your VS Code settings (Remote [WSL] settings — `F1` → *Preferences: Open Remote Settings (WSL)* — or User settings JSON):
 
 ```jsonc
 {
@@ -151,7 +151,7 @@ The setup installs `tmux` (`scripts/apps.sh`) and a `~/.tmux.conf` (`scripts/.tm
     },
     "zsh-tmux": {
       "path": "zsh",
-      "args": ["-c", "exec tmux new-session -A -s \"vsc-${PWD##*/}\""],
+      "args": ["-c", "exec tmux-vscode-session"],
       "icon": "terminal-tmux"
     }
   },
@@ -166,7 +166,7 @@ The setup installs `tmux` (`scripts/apps.sh`) and a `~/.tmux.conf` (`scripts/.tm
 
 How it behaves:
 
-- **Persistent sessions per workspace** — `tmux new-session -A -s "vsc-${PWD##*/}"` attaches to (or creates) a session named after the workspace folder, e.g. `vsc-wsl-setup`. Closing the VS Code window keeps the session alive; reopening the workspace reattaches to it with scrollback and running processes intact. To really end a session, `exit` the shell inside tmux (or `tmux kill-session -t vsc-<name>`).
+- **Persistent sessions per repository** — `tmux-vscode-session` uses the repo root path to derive a stable session name (`vsc_<owner>_<repo>_<hash>`). This avoids collisions between similarly named repositories from different folders/accounts. Closing the VS Code window keeps the session alive; reopening the same repository reattaches to it with scrollback and running processes intact. To really end a session, `exit` the shell inside tmux (or `tmux kill-session -t "$(tmux display-message -p '#S')"`).
 - **Tasks and debug terminals are unaffected** — `terminal.integrated.automationProfile.linux` points to plain `zsh`, so VS Code tasks and debug consoles never run inside tmux. Do not remove it: without an explicit automation profile they may inherit the tmux default profile.
 - **Opt-out** — the configuration is opt-in per the settings above; nothing in the scripts touches VS Code settings. To open a one-off terminal outside tmux, pick the plain `zsh` profile from the terminal dropdown (`+` → `zsh`). To opt out entirely, set `"terminal.integrated.defaultProfile.linux": "zsh"` (or remove the settings).
 

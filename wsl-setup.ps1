@@ -316,11 +316,18 @@ function Install-WslConfig {
         return
     }
 
-    try {
-        $content = Invoke-WebRequest -UseBasicParsing -Uri $templateUrl | Select-Object -ExpandProperty Content
-    } catch {
-        Write-Host ("Falha ao baixar .wslconfig.template de {0}: {1}" -f $templateUrl, $_.Exception.Message) -ForegroundColor Red
-        exit 1
+    # Use local template if available (e.g. running from clone)
+    $localTemplate = Join-Path $PSScriptRoot "scripts" ".wslconfig.template"
+    if (Test-Path $localTemplate) {
+        Write-Host "Installing .wslconfig from local template: $localTemplate" -ForegroundColor DarkGray
+        $content = Get-Content -Raw -Path $localTemplate
+    } else {
+        try {
+            $content = Invoke-WebRequest -UseBasicParsing -Uri $templateUrl | Select-Object -ExpandProperty Content
+        } catch {
+            Write-Host ("Falha ao baixar .wslconfig.template de {0}: {1}" -f $templateUrl, $_.Exception.Message) -ForegroundColor Red
+            exit 1
+        }
     }
 
     if (Test-Path $target) {

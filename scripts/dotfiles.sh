@@ -37,6 +37,16 @@ fi
 # Move permanent files to Home directory
 replace "./scripts/.zshrc" ".zshrc"
 replace "./scripts/.tmux.conf" ".tmux.conf"
+run mkdir -p "${HOME}/.local/bin"
+TMUX_VSCODE_SRC="${DOTFILES_DIRECTORY}/scripts/tmux-vscode-session.sh"
+TMUX_VSCODE_DEST="${HOME}/.local/bin/tmux-vscode-session"
+if cmp -s "$TMUX_VSCODE_SRC" "$TMUX_VSCODE_DEST"; then
+  echo_info "tmux-vscode-session already up to date - skipping."
+elif [ "$DRY_RUN" = true ]; then
+  echo_dry "install -m 755 ${TMUX_VSCODE_SRC} ${TMUX_VSCODE_DEST}"
+else
+  install -m 755 "$TMUX_VSCODE_SRC" "$TMUX_VSCODE_DEST"
+fi
 
 # Set Zsh as default shell in Linux (guard: skip when already the login shell)
 if [ "$(getent passwd "$USER" | cut -d: -f7)" = "$(which zsh)" ]; then

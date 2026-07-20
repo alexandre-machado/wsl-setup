@@ -1,7 +1,12 @@
+# managed-by: wsl-setup
 [wsl2]
 # Mirrored mode gives Windows apps direct access to WSL services (and vice
 # versa), but it accumulates phantom eth interfaces and stresses netlink
 # buffers. Pair it with dnsTunneling + firewall to stay stable.
+#
+# NOTE: If you experience WSL2 hangs/freezes (load average > 1000, 'ip addr' hangs)
+# or VS Code connection timeouts, switch networkingMode to NAT (and comment out firewall=true):
+# networkingMode=NAT
 networkingMode=Mirrored
 
 # DNS over the Windows resolver — more stable with VPNs / Tailscale.
