@@ -12,7 +12,8 @@ _Check linked files to more details._
 - [network-tuning.sh](scripts/network-tuning.sh) - kernel / TCP tuning for AI terminal tools (fixes ENOBUFS freezes under Mirrored networking + Tailscale).
 - [.wslconfig.template](scripts/.wslconfig.template) - Windows-side `.wslconfig` provisioned by `wsl-setup.ps1` (Mirrored networking + DNS tunneling + memory caps).
 - [cloud-init.user-data.template](scripts/cloud-init.user-data.template) - cloud-init user-data rendered by `wsl-setup.ps1` for brand-new Ubuntu instances (default user, locale, base packages).
-- [dotfiles.sh](scripts/dotfiles.sh) - installs _Oh My Zsh_, _.zshrc_ and _Git_ configs.
+- [claude/statusline-command.sh](scripts/claude/statusline-command.sh) - _Claude Code_ statusLine (user@host, `~`-shortened path, context %, turn and token counters); installed to `~/.claude/statusline-command.sh` by `dotfiles.sh`.
+- [dotfiles.sh](scripts/dotfiles.sh) - installs _Oh My Zsh_, _.zshrc_, the _Claude Code_ statusLine and _Git_ configs.
 - [npm.sh](scripts/npm.sh) - _Node.js_ and _npm_ settings.
 - [setup.sh](setup.sh) - main installer.
 - [ssh.sh](scripts/ssh.sh) - generate _SSH_.

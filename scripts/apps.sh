@@ -16,7 +16,7 @@ run sudo apt upgrade -y
 run sudo apt install -y build-essential
 
 # Common packages
-run sudo apt install -y apt-transport-https ca-certificates curl gawk ssh-askpass tree unzip wget zsh
+run sudo apt install -y apt-transport-https ca-certificates curl gawk jq ssh-askpass tree unzip wget zsh
 
 # Git (guard: only add the PPA once — check active source files only,
 # so leftover *.save / *.distUpgrade copies don't suppress the setup)
