@@ -67,6 +67,10 @@ alias winhome="/mnt/c/Users/$(echo $USER)"
 # Open .zshrc in VSCode
 alias zshcfg="code ~/.zshrc"
 
+# Claude CLI Shortcuts
+alias hc="claude --dangerously-skip-permissions"
+alias marc="claude --channels plugin:telegram@claude-plugins-official --dangerously-skip-permissions '/marc:tech-lead'"
+
 # >>> ctrl-word-delete >>>
 # Apaga palavra anterior com Ctrl+Backspace (varia por terminal)
 bindkey '^H' backward-kill-word
