@@ -20,3 +20,8 @@ Thumbs.db
 __pycache__/
 *.pyc
 .planning/tmp/
+
+# Claude Code temporary artifacts & subagent worktrees
+.claude/worktrees/
+.claude/memory/
+.claude/projects/
