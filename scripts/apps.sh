@@ -57,5 +57,14 @@ else
   curl https://raw.githubusercontent.com/jesseduffield/lazydocker/master/scripts/install_update_linux.sh | bash
 fi
 
+# Claude Code CLI (guard: skip when already installed)
+if command -v claude > /dev/null 2>&1; then
+  echo_info "claude already installed - skipping."
+elif [ "$DRY_RUN" = true ]; then
+  echo_dry "curl -fsSL https://claude.ai/install.sh | bash"
+else
+  curl -fsSL https://claude.ai/install.sh | bash
+fi
+
 # Finish
 echo_success "Finished applications installation."
