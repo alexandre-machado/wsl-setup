@@ -123,6 +123,7 @@ wslconf_add_missing() {
 # rendered to the invoking user.
 wslconf_section=""
 while IFS= read -r wslconf_line || [ -n "$wslconf_line" ]; do
+  wslconf_line="${wslconf_line%$'\r'}"
   case "$wslconf_line" in
     \#* | "")
       continue
