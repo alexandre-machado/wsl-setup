@@ -48,11 +48,49 @@ else
   install -m 755 "$TMUX_VSCODE_SRC" "$TMUX_VSCODE_DEST"
 fi
 
+# Claude Code statusLine script (~/.claude/statusline-command.sh). Only the
+# script is owned by this repo; ~/.claude/settings.json belongs to Claude Code
+# itself, so the statusLine key is merged in (never overwritten) below.
+run mkdir -p "${HOME}/.claude"
+STATUSLINE_SRC="${DOTFILES_DIRECTORY}/scripts/claude/statusline-command.sh"
+STATUSLINE_DEST="${HOME}/.claude/statusline-command.sh"
+if cmp -s "$STATUSLINE_SRC" "$STATUSLINE_DEST"; then
+  echo_info "Claude statusline script already up to date - skipping."
+elif [ "$DRY_RUN" = true ]; then
+  echo_dry "install -m 755 ${STATUSLINE_SRC} ${STATUSLINE_DEST}"
+else
+  install -m 755 "$STATUSLINE_SRC" "$STATUSLINE_DEST"
+fi
+
+# Register the statusLine in ~/.claude/settings.json without clobbering any
+# other key the user (or Claude Code) put there. Guard: skip when it already
+# points at our script.
+CLAUDE_SETTINGS="${HOME}/.claude/settings.json"
+STATUSLINE_CMD="bash ~/.claude/statusline-command.sh"
+if ! command -v jq >/dev/null 2>&1; then
+  echo_info "jq not available - skipping Claude statusLine registration."
+elif [ -f "$CLAUDE_SETTINGS" ] && \
+     [ "$(jq -r '.statusLine.command // empty' "$CLAUDE_SETTINGS" 2>/dev/null)" = "$STATUSLINE_CMD" ]; then
+  echo_info "Claude statusLine already registered - skipping."
+elif [ "$DRY_RUN" = true ]; then
+  echo_dry "merge .statusLine into ${CLAUDE_SETTINGS} (command: ${STATUSLINE_CMD})"
+else
+  [ -f "$CLAUDE_SETTINGS" ] || echo '{}' > "$CLAUDE_SETTINGS"
+  if jq --arg cmd "$STATUSLINE_CMD" \
+       '.statusLine = {type: "command", command: $cmd}' \
+       "$CLAUDE_SETTINGS" > "${CLAUDE_SETTINGS}.tmp"; then
+    mv "${CLAUDE_SETTINGS}.tmp" "$CLAUDE_SETTINGS"
+  else
+    rm -f "${CLAUDE_SETTINGS}.tmp"
+    echo_warning "Could not parse ${CLAUDE_SETTINGS} - left untouched."
+  fi
+fi
+
 # Set Zsh as default shell in Linux (guard: skip when already the login shell)
 if [ "$(getent passwd "$USER" | cut -d: -f7)" = "$(which zsh)" ]; then
   echo_info "Zsh is already the default shell - skipping."
 else
-  run chsh -s $(which zsh)
+  run sudo chsh -s $(which zsh) $USER
 fi
 
 # Fix “zsh compinit: insecure directories” warnings

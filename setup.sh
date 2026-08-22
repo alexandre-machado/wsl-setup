@@ -117,11 +117,13 @@ echo_info "Creating repos directory in Home directory..."
 mkdir -p "${HOME}/repos"
 
 if [ -z "$ONLY" ]; then
-  # Cleanup cached downloads and remove the installation zip and folder
+  # Cleanup cached downloads and remove temporary installation folder if in /tmp
   echo_info "Removing unnecessary files..."
   sudo apt -y autoremove
   rm -rf ../scripts.zip
-  rm -rf "${DOTFILES_DIRECTORY}"
+  if [[ "${DOTFILES_DIRECTORY}" == /tmp/* ]]; then
+    rm -rf "${DOTFILES_DIRECTORY}"
+  fi
 fi
 
 # Finish
