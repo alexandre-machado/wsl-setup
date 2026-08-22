@@ -82,14 +82,12 @@ append_once() {
   fi
 }
 
-# Force move/replace files (skips when content is already identical)
+# Force move/replace files (normalizes CRLF -> LF so dotfiles are always clean in Linux)
 replace() {
   local src="${DOTFILES_DIRECTORY}/${1}" dest="${HOME}/${2}"
-  if cmp -s "$src" "$dest"; then
-    echo_info "${2} already up to date - skipping."
-  elif [ "$DRY_RUN" = true ]; then
-    echo_dry "cp -f ${src} ${dest}"
+  if [ "$DRY_RUN" = true ]; then
+    echo_dry "install (LF normalized) ${src} -> ${dest}"
   else
-    cp -f "$src" "$dest"
+    tr -d '\r' < "$src" > "${dest}.tmp" && mv -f "${dest}.tmp" "$dest"
   fi
 }

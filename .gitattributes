@@ -1,2 +1,7 @@
-*.sh text eol=lf
+# Enforce LF for all repository text files (dotfiles, bash scripts, configs)
+* text eol=lf
+
+# Windows PowerShell and batch scripts
 *.ps1 text eol=crlf
+*.bat text eol=crlf
+*.cmd text eol=crlf
