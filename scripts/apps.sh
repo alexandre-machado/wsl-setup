@@ -57,6 +57,24 @@ else
   curl https://raw.githubusercontent.com/jesseduffield/lazydocker/master/scripts/install_update_linux.sh | bash
 fi
 
+# GitHub CLI (guard: skip when already installed)
+if command -v gh > /dev/null 2>&1; then
+  echo_info "gh already installed - skipping."
+else
+  run sudo apt install -y gh
+fi
+
+# Database Client (psql)
+run sudo apt install -y postgresql-client
+
+# Cloud Storage Sync (rclone)
+run sudo apt install -y rclone
+
+# Docker CLI & Compose plugin (native Linux binaries, service disabled to use Docker Desktop socket)
+run sudo apt install -y docker.io docker-compose-v2
+run sudo systemctl disable --now docker.service docker.socket 2>/dev/null || true
+run sudo usermod -aG docker "$USER" 2>/dev/null || true
+
 # Claude Code CLI (guard: skip when already installed)
 if command -v claude > /dev/null 2>&1; then
   echo_info "claude already installed - skipping."
