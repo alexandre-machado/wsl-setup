@@ -82,7 +82,7 @@ bindkey '^[[3;5~' kill-word
 # <<< ctrl-word-delete <<<
 
 # Auto-mount dedicated repos data disk if not mounted
-if [ ! -d "$HOME/repos/alexandre-machado" ]; then
+if [ ! -d "$HOME/repos" ] || [ -z "$(ls -A "$HOME/repos" 2>/dev/null)" ]; then
   /mnt/c/Windows/System32/wsl.exe --mount --vhd "D:\wsl\data\repos.vhdx" --name repos 2>/dev/null || true
   sudo mount -a 2>/dev/null || true
 fi

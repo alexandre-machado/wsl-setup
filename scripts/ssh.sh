@@ -49,8 +49,8 @@ fi
 
 # Additional well-known drive mount fallbacks
 candidates+=(
-  "/mnt/e/Users/alexandre-machado/OneDrive/Projetos/WorkSpace/ssh/id_ed25519"
-  "/mnt/c/Users/alexandre-machado/.ssh/id_ed25519"
+  "/mnt/c/Users/"*"/OneDrive/Projetos/WorkSpace/ssh/id_ed25519"
+  "/mnt/c/Users/"*"/.ssh/id_ed25519"
 )
 
 for cand in "${candidates[@]}"; do

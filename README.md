@@ -55,14 +55,14 @@ Define your distro profiles in `%OneDrive%\Projetos\WorkSpace\wsl-profiles.json`
     {
       "name": "Ubuntu-Personal",
       "installLocation": "%LOCALAPPDATA%\\wsl\\Ubuntu-Personal",
-      "gitName": "Alexandre Machado",
-      "gitEmail": "alexandre@machado.cc"
+      "gitName": "Your Name",
+      "gitEmail": "your.email@example.com"
     },
     {
       "name": "Ubuntu-CloudHumans",
       "installLocation": "%LOCALAPPDATA%\\wsl\\Ubuntu-CloudHumans",
-      "gitName": "Alexandre Machado",
-      "gitEmail": "alexandre@machado.cc"
+      "gitName": "Your Name",
+      "gitEmail": "your.email@example.com"
     }
   ]
 }

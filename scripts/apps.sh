@@ -68,7 +68,7 @@ fi
 if [ ! -f "$HOME/.config/gh/hosts.yml" ]; then
   for onedrive_gh in \
     "/mnt/c/Users/$USER/OneDrive/Projetos/WorkSpace/gh" \
-    "/mnt/c/Users/alexandre-machado/OneDrive/Projetos/WorkSpace/gh"; do
+    "/mnt/c/Users/"*"/OneDrive/Projetos/WorkSpace/gh"; do
     if [ -d "$onedrive_gh" ]; then
       echo_info "Restoring GitHub CLI configuration from $onedrive_gh..."
       mkdir -p "$HOME/.config/gh"

@@ -9,16 +9,14 @@
     {
       "name": "Ubuntu-Personal",
       "installLocation": "%LOCALAPPDATA%\\wsl\\Ubuntu-Personal",
-      "gitName": "Alexandre Machado",
-      "gitEmail": "alexandre@machado.cc",
-      "replaceIfExists": false
+      "gitName": "Your Name",
+      "gitEmail": "your.email@example.com"
     },
     {
-      "name": "Ubuntu-CloudHumans",
-      "installLocation": "%LOCALAPPDATA%\\wsl\\Ubuntu-CloudHumans",
-      "gitName": "Alexandre Machado",
-      "gitEmail": "alexandre@machado.cc",
-      "replaceIfExists": false
+      "name": "Ubuntu-Work",
+      "installLocation": "%LOCALAPPDATA%\\wsl\\Ubuntu-Work",
+      "gitName": "Your Name",
+      "gitEmail": "your.work.email@example.com"
     }
   ]
 }
