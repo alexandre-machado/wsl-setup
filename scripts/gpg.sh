@@ -6,10 +6,31 @@
 
 source ./scripts/utils.sh
 
+# Search for persistent master GPG keys in OneDrive / Windows Host
+found_persistent_gpg=""
+for cand in \
+  "/mnt/c/Users/$USER/OneDrive/Projetos/WorkSpace/gpg" \
+  "/mnt/c/Users/"*"/OneDrive/Projetos/WorkSpace/gpg"; do
+  for sec_file in "$cand"/*.sec.asc "$cand"/*secring.gpg; do
+    if [ -f "$sec_file" ]; then
+      found_persistent_gpg="$sec_file"
+      break 2
+    fi
+  done
+done
+
 # Guard: [ -d ~/.gnupg ] first, so a dry-run on a fresh machine does not
 # let `gpg --list-secret-keys` create ~/.gnupg as a side effect.
 if [ -d "${HOME}/.gnupg" ] && gpg --list-secret-keys "$GIT_EMAIL" > /dev/null 2>&1; then
   echo_info "GPG key for $GIT_EMAIL already exists - skipping generation."
+elif [ -n "$found_persistent_gpg" ]; then
+  echo_info "Found persistent master GPG key at ${found_persistent_gpg}."
+  if [ "$DRY_RUN" = true ]; then
+    echo_dry "gpg --import ${found_persistent_gpg}"
+  else
+    gpg --import "$found_persistent_gpg"
+    echo_success "Restored master GPG key from OneDrive/Host."
+  fi
 elif [ "$DRY_RUN" = true ]; then
   echo_dry "gpg --batch --generate-key (ed25519, no protection, $GIT_NAME <$GIT_EMAIL>)"
   echo_dry "git config --global user.signingkey <KEY_ID> && commit.gpgsign=true && tag.gpgSign=true"
