@@ -63,6 +63,12 @@ Define your distro profiles in `%OneDrive%\Projetos\WorkSpace\wsl-profiles.json`
       "installLocation": "%LOCALAPPDATA%\\wsl\\Ubuntu-CloudHumans",
       "gitName": "Your Name",
       "gitEmail": "your.email@example.com"
+    },
+    {
+      "name": "Ubuntu-CI",
+      "installLocation": "%LOCALAPPDATA%\\wsl\\Ubuntu-CI",
+      "gitName": "GitHub Actions Runner",
+      "gitEmail": "ci@example.com"
     }
   ]
 }

@@ -17,6 +17,12 @@
       "installLocation": "%LOCALAPPDATA%\\wsl\\Ubuntu-Work",
       "gitName": "Your Name",
       "gitEmail": "your.work.email@example.com"
+    },
+    {
+      "name": "Ubuntu-CI",
+      "installLocation": "%LOCALAPPDATA%\\wsl\\Ubuntu-CI",
+      "gitName": "GitHub Actions Runner",
+      "gitEmail": "ci@example.com"
     }
   ]
 }

@@ -64,6 +64,15 @@ else
   run sudo apt install -y gh
 fi
 
+# Nektos act (Local GitHub Actions runner CLI)
+if command -v act > /dev/null 2>&1; then
+  echo_info "act already installed - skipping."
+elif [ "$DRY_RUN" = true ]; then
+  echo_dry "curl -fsSL https://raw.githubusercontent.com/nektos/act/master/install.sh | sudo bash -s -- -b /usr/local/bin"
+else
+  curl -fsSL https://raw.githubusercontent.com/nektos/act/master/install.sh | sudo bash -s -- -b /usr/local/bin
+fi
+
 # Restore gh config from OneDrive if available and missing locally
 if [ ! -f "$HOME/.config/gh/hosts.yml" ]; then
   for onedrive_gh in \
