@@ -394,10 +394,11 @@ foreach ($profile in $config.distros) {
             }
         }
 
-        # Configure default user (ubuntu-24) with passwordless sudo & /etc/wsl.conf (single-line commands to avoid CRLF issues)
-        $userCmd = "id -u ubuntu-24 &>/dev/null || useradd -m -s /bin/bash -u 1000 ubuntu-24; usermod -aG sudo ubuntu-24 2>/dev/null || true; echo 'ubuntu-24 ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/ubuntu-24; chmod 0440 /etc/sudoers.d/ubuntu-24; printf '[boot]\nsystemd=true\n\n[user]\ndefault=ubuntu-24\n\n[network]\ngenerateResolvConf=true\n\n[interop]\nenabled=true\nappendWindowsPath=true\n' > /etc/wsl.conf"
-        Invoke-Checked -Description "Configuring default user (ubuntu-24) and systemd in '$name'" -Action {
-            wsl -d $name -u root -e bash -c $userCmd
+        # Configure default user (ubuntu-24) with passwordless sudo & /etc/wsl.conf across distros
+        $systemdVal = if ($rootfsInfo.Family -eq "alpine") { "false" } else { "true" }
+        $userCmd = "if command -v apk >/dev/null 2>&1; then apk update && apk add --no-cache sudo bash shadow curl jq git ca-certificates; id -u ubuntu-24 &>/dev/null || useradd -m -s /bin/bash -u 1000 ubuntu-24 2>/dev/null || adduser -D -u 1000 -s /bin/bash ubuntu-24 2>/dev/null; addgroup ubuntu-24 wheel 2>/dev/null || true; else id -u ubuntu-24 &>/dev/null || useradd -m -s /bin/bash -u 1000 ubuntu-24; usermod -aG sudo ubuntu-24 2>/dev/null || true; fi; mkdir -p /etc/sudoers.d; echo 'ubuntu-24 ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/ubuntu-24; chmod 0440 /etc/sudoers.d/ubuntu-24; printf '[boot]\nsystemd=$systemdVal\n\n[user]\ndefault=ubuntu-24\n\n[network]\ngenerateResolvConf=true\n\n[interop]\nenabled=true\nappendWindowsPath=true\n' > /etc/wsl.conf"
+        Invoke-Checked -Description "Configuring default user (ubuntu-24) and wsl.conf in '$name'" -Action {
+            wsl -d $name -u root -e /bin/sh -c $userCmd
         }
 
         # Configure /etc/fstab to mount dedicated ext4 data disk by LABEL only for non-isolated profiles
@@ -413,16 +414,24 @@ foreach ($profile in $config.distros) {
             }
         }
 
-        # Run as-code setup.sh inside the new distro
-        if ($isIsolated) {
-            $asCodeSetupCmd = "export ISOLATED_PROFILE=true && export SSH_DISABLED=true && export GPG_DISABLED=true && cd /home/ubuntu-24 && if [ -d /mnt/d/repos/alexandre-machado/wsl-setup ]; then cp -r /mnt/d/repos/alexandre-machado/wsl-setup /tmp/wsl-setup && cd /tmp/wsl-setup && ./setup.sh --only apps,network-tuning,wsl-conf,dotfiles,npm; else git clone https://github.com/alexandre-machado/wsl-setup.git && cd wsl-setup && ./setup.sh --only apps,network-tuning,wsl-conf,dotfiles,npm; fi"
+        # Run as-code setup inside the new distro
+        if ($rootfsInfo.Family -eq "alpine") {
+            # Alpine-specific ultra-fast lightweight CI/runner provisioning (~3 MB base)
+            $alpineSetupCmd = "apk update && apk add --no-cache docker-cli docker-cli-compose curl jq git bash ca-certificates && curl -fsSL https://raw.githubusercontent.com/nektos/act/master/install.sh | bash -s -- -b /usr/local/bin && mkdir -p /home/ubuntu-24/workspace && echo 'export PATH=/usr/local/bin:`$PATH' >> /home/ubuntu-24/.bashrc"
+            Invoke-Checked -Description "Executing Alpine CI runner setup in '$name' (act, docker-cli, git, jq)" -Action {
+                wsl -d $name -u root -e /bin/sh -c $alpineSetupCmd
+            }
         } else {
-            $gitName = Escape-BashSingleQuoted $profile.gitName
-            $gitEmail = Escape-BashSingleQuoted $profile.gitEmail
-            $asCodeSetupCmd = "export GIT_NAME='$gitName' && export GIT_EMAIL='$gitEmail' && cd /home/ubuntu-24 && if [ -d /mnt/d/repos/alexandre-machado/wsl-setup ]; then cd /mnt/d/repos/alexandre-machado/wsl-setup && ./setup.sh; else git clone https://github.com/alexandre-machado/wsl-setup.git && cd wsl-setup && ./setup.sh; fi"
-        }
-        Invoke-Checked -Description "Executing As-Code setup.sh inside '$name' (Dotfiles, Zsh, Tmux, Apps)" -Action {
-            wsl -d $name -u ubuntu-24 -e bash -lc $asCodeSetupCmd
+            if ($isIsolated) {
+                $asCodeSetupCmd = "export ISOLATED_PROFILE=true && export SSH_DISABLED=true && export GPG_DISABLED=true && cd /home/ubuntu-24 && if [ -d /mnt/d/repos/alexandre-machado/wsl-setup ]; then cp -r /mnt/d/repos/alexandre-machado/wsl-setup /tmp/wsl-setup && cd /tmp/wsl-setup && ./setup.sh --only apps,network-tuning,wsl-conf,dotfiles,npm; else git clone https://github.com/alexandre-machado/wsl-setup.git && cd wsl-setup && ./setup.sh --only apps,network-tuning,wsl-conf,dotfiles,npm; fi"
+            } else {
+                $gitName = Escape-BashSingleQuoted $profile.gitName
+                $gitEmail = Escape-BashSingleQuoted $profile.gitEmail
+                $asCodeSetupCmd = "export GIT_NAME='$gitName' && export GIT_EMAIL='$gitEmail' && cd /home/ubuntu-24 && if [ -d /mnt/d/repos/alexandre-machado/wsl-setup ]; then cd /mnt/d/repos/alexandre-machado/wsl-setup && ./setup.sh; else git clone https://github.com/alexandre-machado/wsl-setup.git && cd wsl-setup && ./setup.sh; fi"
+            }
+            Invoke-Checked -Description "Executing As-Code setup.sh inside '$name' (Dotfiles, Zsh, Tmux, Apps)" -Action {
+                wsl -d $name -u ubuntu-24 -e bash -lc $asCodeSetupCmd
+            }
         }
     } else {
         Write-Host "Distro '$name' already exists. Skipping import and initial provisioning." -ForegroundColor DarkGray

@@ -25,26 +25,10 @@
       "gitEmail": "your.work.email@example.com"
     },
     {
-      "name": "Ubuntu-CI",
-      "distribution": "Ubuntu",
-      "version": "24.04",
-      "installLocation": "%LOCALAPPDATA%\\wsl\\Ubuntu-CI",
-      "mountDataDisk": false,
-      "isolated": true
-    },
-    {
-      "name": "Debian-Lab",
-      "distribution": "Debian",
-      "version": "12",
-      "installLocation": "%LOCALAPPDATA%\\wsl\\Debian-Lab",
-      "mountDataDisk": false,
-      "isolated": true
-    },
-    {
-      "name": "Alpine-Micro",
+      "name": "Alpine-CI",
       "distribution": "Alpine",
       "version": "3.20",
-      "installLocation": "%LOCALAPPDATA%\\wsl\\Alpine-Micro",
+      "installLocation": "%LOCALAPPDATA%\\wsl\\Alpine-CI",
       "mountDataDisk": false,
       "isolated": true
     }
