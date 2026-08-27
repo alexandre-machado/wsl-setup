@@ -212,8 +212,8 @@ function Get-DistroRootfsInfo {
                     Version = "12"
                     Codename = "bookworm"
                     Name = "Debian 12 (Bookworm)"
-                    Url = "https://github.com/debuerreotype/docker-debian-artifacts/raw/dist-amd64/bookworm/rootfs.tar.xz"
-                    CacheFile = "debian-12-rootfs.tar.xz"
+                    Url = "https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-genericcloud-amd64.tar.xz"
+                    CacheFile = "debian-12-genericcloud-amd64.tar.xz"
                     Family = "debian"
                 }
             }
@@ -497,7 +497,7 @@ foreach ($profile in $config.distros) {
 
         # Configure default user (ubuntu-24) with passwordless sudo & /etc/wsl.conf across distros
         $systemdVal = if ($rootfsInfo.Family -eq "alpine") { "false" } else { "true" }
-        $userCmd = "if command -v apk >/dev/null 2>&1; then apk update && apk add --no-cache sudo bash shadow curl jq git ca-certificates; id -u ubuntu-24 &>/dev/null || useradd -m -s /bin/bash -u 1000 ubuntu-24 2>/dev/null || adduser -D -u 1000 -s /bin/bash ubuntu-24 2>/dev/null; addgroup ubuntu-24 wheel 2>/dev/null || true; else id -u ubuntu-24 &>/dev/null || useradd -m -s /bin/bash -u 1000 ubuntu-24; usermod -aG sudo ubuntu-24 2>/dev/null || true; fi; mkdir -p /etc/sudoers.d; echo 'ubuntu-24 ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/ubuntu-24; chmod 0440 /etc/sudoers.d/ubuntu-24; printf '[boot]\nsystemd=$systemdVal\n\n[user]\ndefault=ubuntu-24\n\n[network]\ngenerateResolvConf=true\n\n[interop]\nenabled=true\nappendWindowsPath=true\n' > /etc/wsl.conf"
+        $userCmd = "if command -v apk >/dev/null 2>&1; then apk update && apk add --no-cache sudo bash shadow curl jq git ca-certificates; id -u ubuntu-24 >/dev/null 2>&1 || useradd -m -s /bin/bash -u 1000 ubuntu-24 >/dev/null 2>&1 || adduser -D -u 1000 -s /bin/bash ubuntu-24 >/dev/null 2>&1; addgroup ubuntu-24 wheel >/dev/null 2>&1 || true; else id -u ubuntu-24 >/dev/null 2>&1 || useradd -m -s /bin/bash -u 1000 ubuntu-24; usermod -aG sudo ubuntu-24 >/dev/null 2>&1 || true; fi; mkdir -p /etc/sudoers.d; echo 'ubuntu-24 ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/ubuntu-24; chmod 0440 /etc/sudoers.d/ubuntu-24; printf '[boot]\nsystemd=$systemdVal\n\n[user]\ndefault=ubuntu-24\n\n[network]\ngenerateResolvConf=true\n\n[interop]\nenabled=true\nappendWindowsPath=true\n' > /etc/wsl.conf"
         Invoke-Checked -Description "Configuring default user (ubuntu-24) and wsl.conf in '$name'" -Action {
             wsl -d $name -u root -e /bin/sh -c $userCmd
         }
