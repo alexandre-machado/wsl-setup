@@ -41,7 +41,7 @@ This setup uses a **three-tier decoupled architecture** designed to survive comp
 
 ### 1. Configure Profiles (`wsl-profiles.json`)
 
-Define your distro profiles in `%OneDrive%\Projetos\WorkSpace\wsl-profiles.json` (or copy from [`wsl-profiles.json.template`](wsl-profiles.json.template)):
+Define your distro profiles in `%OneDrive%\Projetos\WorkSpace\wsl-profiles.json` (or copy from [`wsl-profiles.template.json`](wsl-profiles.template.json)):
 
 ```json
 {

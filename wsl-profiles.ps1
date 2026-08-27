@@ -272,7 +272,7 @@ function Resolve-ConfigFilePath {
     }
     Write-Host ""
     Write-Host "To configure your profiles:" -ForegroundColor Cyan
-    Write-Host "  1. Copy 'wsl-profiles.json.template' to your OneDrive folder (e.g. '$env:OneDrive\Projetos\WorkSpace\wsl-profiles.json')"
+    Write-Host "  1. Copy 'wsl-profiles.template.json' to your OneDrive folder (e.g. '$env:OneDrive\Projetos\WorkSpace\wsl-profiles.json')"
     Write-Host "  2. Customize the distro names, paths, and Git identities."
     Write-Host "  3. Re-run this script."
     throw "Missing wsl-profiles.json configuration."
