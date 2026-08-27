@@ -178,11 +178,13 @@ done
 # Comandos nativos de limpeza de ferramentas
 run_tool_clean() {
     local tool="$1" cmd="$2"
-    if command -v "$tool" &>/dev/null; then
+    if command -v "$tool" >/dev/null 2>&1; then
         if $DRY_RUN; then
             skip "$cmd"
         else
-            eval "$cmd" &>/dev/null 2>&1 && ok "  [x] $cmd"
+            if eval "$cmd" >/dev/null 2>&1; then
+                ok "  [x] $cmd"
+            fi
         fi
     fi
 }
