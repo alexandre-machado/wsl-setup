@@ -16,20 +16,19 @@ bash -n cleanup.sh
 for f in scripts/*.sh; do bash -n "$f"; done
 ```
 
-Run bootstrap safety marker checks:
+Run PowerShell Dry-Run validation:
 
-```bash
-grep -n "preflight\|create-new\|replace-existing\|Y/N\|No destructive fallback\|wsl --unregister" wsl-setup.ps1
+```pwsh
+pwsh -File .\wsl-setup.ps1 -DryRun
 ```
 
 ## Manual Verification Scenarios
 
-### Windows bootstrap safety
+### Windows bootstrap dry-run
 
-1. Start [wsl-setup.ps1](../wsl-setup.ps1)
-2. Confirm preflight summary appears before mode selection
-3. Confirm `replace-existing` requests explicit confirmation
-4. Decline replacement and confirm script follows non-destructive path
+1. Run `pwsh -File .\wsl-setup.ps1 -DryRun`
+2. Confirm preflight provisioning plan summary appears with all configured distros
+3. Confirm dry-run completes cleanly without mutating system state
 
 ### Linux setup flow
 
