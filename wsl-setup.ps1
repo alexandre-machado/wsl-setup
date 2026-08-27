@@ -517,9 +517,9 @@ foreach ($profile in $config.distros) {
 
         # Run as-code setup inside the new distro
         if ($rootfsInfo.Family -eq "alpine") {
-            # Alpine-specific ultra-fast lightweight CI/runner provisioning (~3 MB base)
-            $alpineSetupCmd = "apk update && apk add --no-cache docker-cli docker-cli-compose curl jq git bash ca-certificates && curl -fsSL https://raw.githubusercontent.com/nektos/act/master/install.sh | bash -s -- -b /usr/local/bin && mkdir -p /home/ubuntu-24/workspace && echo 'export PATH=/usr/local/bin:`$PATH' >> /home/ubuntu-24/.bashrc"
-            Invoke-Checked -Description "Executing Alpine CI runner setup in '$name' (act, docker-cli, git, jq)" -Action {
+            # Alpine-specific ultra-fast lightweight CI/runner provisioning (~3 MB base + shasum/act/docker)
+            $alpineSetupCmd = "apk update && apk add --no-cache docker-cli docker-cli-compose curl jq git bash ca-certificates coreutils perl-utils icu-libs krb5-libs zlib libstdc++ gcompat && curl -fsSL https://raw.githubusercontent.com/nektos/act/master/install.sh | bash -s -- -b /usr/local/bin && mkdir -p /home/ubuntu-24/workspace && echo 'export PATH=/usr/local/bin:`$PATH' >> /home/ubuntu-24/.bashrc"
+            Invoke-Checked -Description "Executing Alpine CI runner setup in '$name' (act, docker-cli, git, jq, shasum)" -Action {
                 wsl -d $name -u root -e /bin/sh -c $alpineSetupCmd
             }
         } else {
