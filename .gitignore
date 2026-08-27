@@ -19,7 +19,6 @@ Thumbs.db
 # Python cache
 __pycache__/
 *.pyc
-.planning/tmp/
 
 # Claude Code temporary artifacts & subagent worktrees
 .claude/worktrees/
