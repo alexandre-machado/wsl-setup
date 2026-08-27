@@ -21,8 +21,8 @@
     {
       "name": "Ubuntu-CI",
       "installLocation": "%LOCALAPPDATA%\\wsl\\Ubuntu-CI",
-      "gitName": "GitHub Actions Runner",
-      "gitEmail": "ci@example.com"
+      "mountDataDisk": false,
+      "isolated": true
     }
   ]
 }

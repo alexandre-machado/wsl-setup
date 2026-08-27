@@ -6,6 +6,12 @@
 
 DRY_RUN="${DRY_RUN:-false}"
 
+if [ "$ISOLATED_PROFILE" = "true" ]; then
+  export GIT_NAME=""
+  export GIT_EMAIL=""
+  return 0 2>/dev/null || exit 0
+fi
+
 # User variables (never prompt in dry-run mode: use placeholders instead)
 if [ -z "$GIT_NAME" ]; then
 	if [ "$DRY_RUN" = true ]; then

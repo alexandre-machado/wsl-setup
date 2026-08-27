@@ -74,7 +74,7 @@ else
 fi
 
 # Restore gh config from OneDrive if available and missing locally
-if [ ! -f "$HOME/.config/gh/hosts.yml" ]; then
+if [ "$ISOLATED_PROFILE" != "true" ] && [ ! -f "$HOME/.config/gh/hosts.yml" ]; then
   for onedrive_gh in \
     "/mnt/c/Users/$USER/OneDrive/Projetos/WorkSpace/gh" \
     "/mnt/c/Users/"*"/OneDrive/Projetos/WorkSpace/gh"; do

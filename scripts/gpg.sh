@@ -6,6 +6,11 @@
 
 source ./scripts/utils.sh
 
+if [ "$ISOLATED_PROFILE" = "true" ] || [ "$GPG_DISABLED" = "true" ]; then
+  echo_info "GPG setup disabled for isolated profile - skipping."
+  exit 0
+fi
+
 # Search for persistent master GPG keys in OneDrive / Windows Host
 found_persistent_gpg=""
 for cand in \

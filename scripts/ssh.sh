@@ -5,6 +5,11 @@
 
 source ./scripts/utils.sh
 
+if [ "$ISOLATED_PROFILE" = "true" ] || [ "$SSH_DISABLED" = "true" ]; then
+  echo_info "SSH setup disabled for isolated profile - skipping."
+  exit 0
+fi
+
 SSH_KEY="${HOME}/.ssh/id_ed25519"
 SSH_PUB="${HOME}/.ssh/id_ed25519.pub"
 SSH_CONFIG="${HOME}/.ssh/config"

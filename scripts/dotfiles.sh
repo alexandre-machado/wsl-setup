@@ -97,8 +97,10 @@ fi
 fpath=(/usr/local/share/zsh-completions $fpath)
 
 # Git configs (plain `set` calls are idempotent; `--add` calls are guarded)
-run git config --global user.name "$GIT_NAME"
-run git config --global user.email "$GIT_EMAIL"
+if [ "$ISOLATED_PROFILE" != "true" ] && [ -n "$GIT_NAME" ] && [ -n "$GIT_EMAIL" ]; then
+  run git config --global user.name "$GIT_NAME"
+  run git config --global user.email "$GIT_EMAIL"
+fi
 run git config --global init.defaultBranch main
 git_config_add_once oh-my-zsh.hide-dirty 1
 git_config_add_once oh-my-zsh.hide-status 1

@@ -212,6 +212,8 @@ foreach ($profile in $config.distros) {
     $name = $profile.name
     $rawLoc = if ($profile.installLocation) { $profile.installLocation } else { "%LOCALAPPDATA%\wsl\$name" }
     $installLocation = Expand-ConfigValue $rawLoc
+    $isIsolated = To-Bool -Value $profile.isolated -Default $false
+    $mountDisk = if ($null -ne $profile.mountDataDisk) { To-Bool -Value $profile.mountDataDisk } else { -not $isIsolated }
     $profileReplace = To-Bool -Value $profile.replaceIfExists -Default $globalReplace
 
     $currentDistros = Get-WslDistroNames
@@ -250,19 +252,28 @@ foreach ($profile in $config.distros) {
             wsl -d $name -u root -e bash -c $userCmd
         }
 
-        # Configure /etc/fstab to mount dedicated ext4 data disk by LABEL
-        if ($dataDiskPath) {
+        # Configure /etc/fstab to mount dedicated ext4 data disk by LABEL only for non-isolated profiles
+        if ($dataDiskPath -and $mountDisk) {
             $fstabCmd = "mkdir -p /home/ubuntu-24/repos; if ! grep -q 'LABEL=wsl-repos' /etc/fstab 2>/dev/null; then echo 'LABEL=wsl-repos /home/ubuntu-24/repos ext4 defaults,nofail 0 0' >> /etc/fstab; fi; mount -a 2>/dev/null || true; chown -R ubuntu-24:ubuntu-24 /home/ubuntu-24"
             Invoke-Checked -Description "Configuring data disk mount (LABEL=wsl-repos) in /etc/fstab for '$name'" -Action {
                 wsl -d $name -u root -e bash -c $fstabCmd
             }
+        } else {
+            $isolatedCmd = "mkdir -p /home/ubuntu-24/workspace; chown -R ubuntu-24:ubuntu-24 /home/ubuntu-24"
+            Invoke-Checked -Description "Creating isolated local workspace for '$name' (no repos disk access)" -Action {
+                wsl -d $name -u root -e bash -c $isolatedCmd
+            }
         }
 
         # Run as-code setup.sh inside the new distro
-        $gitName = Escape-BashSingleQuoted $profile.gitName
-        $gitEmail = Escape-BashSingleQuoted $profile.gitEmail
-        $asCodeSetupCmd = "export GIT_NAME='$gitName' && export GIT_EMAIL='$gitEmail' && cd /home/ubuntu-24 && if [ -d /mnt/d/repos/alexandre-machado/wsl-setup ]; then cd /mnt/d/repos/alexandre-machado/wsl-setup && ./setup.sh; else git clone https://github.com/alexandre-machado/wsl-setup.git && cd wsl-setup && ./setup.sh; fi"
-        Invoke-Checked -Description "Executing As-Code setup.sh inside '$name' (Dotfiles, Zsh, Tmux, SSH, Git)" -Action {
+        if ($isIsolated) {
+            $asCodeSetupCmd = "export ISOLATED_PROFILE=true && export SSH_DISABLED=true && export GPG_DISABLED=true && cd /home/ubuntu-24 && if [ -d /mnt/d/repos/alexandre-machado/wsl-setup ]; then cp -r /mnt/d/repos/alexandre-machado/wsl-setup /tmp/wsl-setup && cd /tmp/wsl-setup && ./setup.sh --only apps,network-tuning,wsl-conf,dotfiles,npm; else git clone https://github.com/alexandre-machado/wsl-setup.git && cd wsl-setup && ./setup.sh --only apps,network-tuning,wsl-conf,dotfiles,npm; fi"
+        } else {
+            $gitName = Escape-BashSingleQuoted $profile.gitName
+            $gitEmail = Escape-BashSingleQuoted $profile.gitEmail
+            $asCodeSetupCmd = "export GIT_NAME='$gitName' && export GIT_EMAIL='$gitEmail' && cd /home/ubuntu-24 && if [ -d /mnt/d/repos/alexandre-machado/wsl-setup ]; then cd /mnt/d/repos/alexandre-machado/wsl-setup && ./setup.sh; else git clone https://github.com/alexandre-machado/wsl-setup.git && cd wsl-setup && ./setup.sh; fi"
+        }
+        Invoke-Checked -Description "Executing As-Code setup.sh inside '$name' (Dotfiles, Zsh, Tmux, Apps)" -Action {
             wsl -d $name -u ubuntu-24 -e bash -lc $asCodeSetupCmd
         }
     } else {
