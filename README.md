@@ -46,6 +46,7 @@ Define your distro profiles in `%OneDrive%\Projetos\WorkSpace\wsl-profiles.json`
 ```json
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "defaultVersion": "24.04",
   "dataDiskPath": "D:\\wsl\\data\\repos.vhdx",
   "dataDiskMountName": "repos",
   "setDefaultDistro": "Ubuntu-Personal",
@@ -54,21 +55,24 @@ Define your distro profiles in `%OneDrive%\Projetos\WorkSpace\wsl-profiles.json`
   "distros": [
     {
       "name": "Ubuntu-Personal",
+      "version": "24.04",
       "installLocation": "%LOCALAPPDATA%\\wsl\\Ubuntu-Personal",
       "gitName": "Your Name",
       "gitEmail": "your.email@example.com"
     },
     {
-      "name": "Ubuntu-CloudHumans",
-      "installLocation": "%LOCALAPPDATA%\\wsl\\Ubuntu-CloudHumans",
+      "name": "Ubuntu-Work",
+      "version": "24.04",
+      "installLocation": "%LOCALAPPDATA%\\wsl\\Ubuntu-Work",
       "gitName": "Your Name",
-      "gitEmail": "your.email@example.com"
+      "gitEmail": "your.work.email@example.com"
     },
     {
       "name": "Ubuntu-CI",
+      "version": "24.04",
       "installLocation": "%LOCALAPPDATA%\\wsl\\Ubuntu-CI",
-      "gitName": "GitHub Actions Runner",
-      "gitEmail": "ci@example.com"
+      "mountDataDisk": false,
+      "isolated": true
     }
   ]
 }

@@ -55,6 +55,63 @@ function To-Bool {
     return $raw -in @("1", "true", "yes", "y")
 }
 
+function Get-DistroRootfsInfo {
+    param(
+        [string]$VersionOrCodename
+    )
+
+    $v = if ([string]::IsNullOrWhiteSpace($VersionOrCodename)) { "24.04" } else { $VersionOrCodename.Trim().ToLowerInvariant() }
+
+    switch ($v) {
+        { $_ -in @("24.04", "noble", "ubuntu-24.04", "ubuntu-24", "lts", "latest") } {
+            return @{
+                Version = "24.04"
+                Codename = "noble"
+                Name = "Ubuntu 24.04 LTS (Noble Numbat)"
+                Url = "https://cdimages.ubuntu.com/ubuntu-wsl/noble/daily-live/current/noble-wsl-amd64.wsl"
+                CacheFile = "noble-wsl-amd64.wsl"
+            }
+        }
+        { $_ -in @("22.04", "jammy", "ubuntu-22.04", "ubuntu-22") } {
+            return @{
+                Version = "22.04"
+                Codename = "jammy"
+                Name = "Ubuntu 22.04 LTS (Jammy Jellyfish)"
+                Url = "https://cdimages.ubuntu.com/ubuntu-wsl/jammy/daily-live/current/jammy-wsl-amd64.wsl"
+                CacheFile = "jammy-wsl-amd64.wsl"
+            }
+        }
+        { $_ -in @("20.04", "focal", "ubuntu-20.04", "ubuntu-20") } {
+            return @{
+                Version = "20.04"
+                Codename = "focal"
+                Name = "Ubuntu 20.04 LTS (Focal Fossa)"
+                Url = "https://cloud-images.ubuntu.com/wsl/focal/current/ubuntu-focal-wsl-amd64-wsl.rootfs.tar.gz"
+                CacheFile = "focal-wsl-amd64.tar.gz"
+            }
+        }
+        default {
+            if ($v -like "http*") {
+                $filename = [System.IO.Path]::GetFileName($v)
+                return @{
+                    Version = "custom"
+                    Codename = "custom"
+                    Name = "Custom Linux Rootfs ($v)"
+                    Url = $v
+                    CacheFile = $filename
+                }
+            }
+            return @{
+                Version = "24.04"
+                Codename = "noble"
+                Name = "Ubuntu 24.04 LTS (Noble Numbat)"
+                Url = "https://cdimages.ubuntu.com/ubuntu-wsl/noble/daily-live/current/noble-wsl-amd64.wsl"
+                CacheFile = "noble-wsl-amd64.wsl"
+            }
+        }
+    }
+}
+
 function Escape-BashSingleQuoted {
     param([string]$Value)
     if ($null -eq $Value) {
@@ -147,48 +204,28 @@ $globalReplace = To-Bool -Value $config.replaceExisting -Default $false
 $dataDiskPath = if ($config.dataDiskPath) { Expand-ConfigValue $config.dataDiskPath } else { "D:\wsl\data\repos.vhdx" }
 $dataDiskMountName = if ($config.dataDiskMountName) { $config.dataDiskMountName } else { "repos" }
 
-# Official Canonical Ubuntu 24.04 WSL rootfs image (~380 MB)
-$rootfsUrl = "https://cdimages.ubuntu.com/ubuntu-wsl/noble/daily-live/current/noble-wsl-amd64.wsl"
 $cacheDir = Join-Path $env:LOCALAPPDATA "wsl\cache"
-$cachedRootfs = Join-Path $cacheDir "noble-wsl-amd64.wsl"
-
 $existingDistros = Get-WslDistroNames
 
 Write-Host ""
 Write-Host "=== WSL Multi-Profile Provisioning Plan (Pure As-Code) ===" -ForegroundColor Cyan
-Write-Host "Base Image:         Ubuntu 24.04 LTS (Official Canonical WSL RootFS)"
 Write-Host "Data VHDX:          $dataDiskPath -> /mnt/wsl/$dataDiskMountName"
 Write-Host "Target Profiles:"
 foreach ($p in $config.distros) {
+    $pVersionRaw = if ($p.version) { $p.version } elseif ($p.release) { $p.release } elseif ($config.defaultVersion) { $config.defaultVersion } else { "24.04" }
+    $pInfo = Get-DistroRootfsInfo -VersionOrCodename $pVersionRaw
     $rawLoc = if ($p.installLocation) { $p.installLocation } else { "%LOCALAPPDATA%\wsl\$($p.name)" }
     $pLoc = Expand-ConfigValue $rawLoc
     $pExists = if ($existingDistros -contains $p.name) { "[Exists]" } else { "[New]" }
     $pName = $p.name
-    $pGitName = $p.gitName
-    $pGitEmail = $p.gitEmail
-    Write-Host "  - $pName $pExists -> $pLoc ($pGitName <$pGitEmail>)"
+    $pMode = if ($p.isolated) { "Isolated Sandbox" } else { "Standard Dev" }
+    Write-Host "  - $pName $pExists ($($pInfo.Name)) [$pMode] -> $pLoc"
 }
 if ($setDefaultDistro) {
     Write-Host "Default Distro:     $setDefaultDistro"
 }
 Write-Host "=========================================================" -ForegroundColor Cyan
-Write-Host ""
-
-# Ensure base rootfs is downloaded and cached
-if (-not (Test-Path -LiteralPath $cachedRootfs)) {
-    if ($DryRun) {
-        Write-Host "[dry-run] Download official Ubuntu 24.04 WSL rootfs from $rootfsUrl to $cachedRootfs" -ForegroundColor DarkGray
-    } else {
-        if (-not (Test-Path -LiteralPath $cacheDir)) {
-            New-Item -ItemType Directory -Path $cacheDir -Force | Out-Null
-        }
-        Write-Host "Downloading official Ubuntu 24.04 WSL rootfs (~380 MB)..." -ForegroundColor Cyan
-        Invoke-WebRequest -Uri $rootfsUrl -OutFile $cachedRootfs -UseBasicParsing
-        Write-Host "Downloaded and cached to $cachedRootfs." -ForegroundColor Green
-    }
-} else {
-    Write-Host "Using cached Ubuntu 24.04 WSL rootfs: $cachedRootfs" -ForegroundColor DarkGray
-}
+Write-Host "" 
 
 # Ensure data disk is mounted
 if ($dataDiskPath) {
@@ -232,6 +269,26 @@ foreach ($profile in $config.distros) {
         }
     }
 
+    # Resolve rootfs image for this distro profile
+    $pVersionRaw = if ($profile.version) { $profile.version } elseif ($profile.release) { $profile.release } elseif ($config.defaultVersion) { $config.defaultVersion } else { "24.04" }
+    $rootfsInfo = Get-DistroRootfsInfo -VersionOrCodename $pVersionRaw
+    $cachedRootfs = Join-Path $cacheDir $rootfsInfo.CacheFile
+
+    if (-not (Test-Path -LiteralPath $cachedRootfs)) {
+        if ($DryRun) {
+            Write-Host "[dry-run] Download $($rootfsInfo.Name) from $($rootfsInfo.Url) to $cachedRootfs" -ForegroundColor DarkGray
+        } else {
+            if (-not (Test-Path -LiteralPath $cacheDir)) {
+                New-Item -ItemType Directory -Path $cacheDir -Force | Out-Null
+            }
+            Write-Host "Downloading $($rootfsInfo.Name) rootfs (~380 MB)..." -ForegroundColor Cyan
+            Invoke-WebRequest -Uri $rootfsInfo.Url -OutFile $cachedRootfs -UseBasicParsing
+            Write-Host "Downloaded and cached to $cachedRootfs." -ForegroundColor Green
+        }
+    } else {
+        Write-Host "Using cached rootfs for $($rootfsInfo.Name): $cachedRootfs" -ForegroundColor DarkGray
+    }
+
     if (-not $exists) {
         if ($DryRun) {
             Write-Host "[dry-run] Ensure install directory parent exists for $installLocation" -ForegroundColor DarkGray
@@ -241,7 +298,7 @@ foreach ($profile in $config.distros) {
             if (-not [string]::IsNullOrWhiteSpace($installParent)) {
                 New-Item -ItemType Directory -Path $installParent -Force | Out-Null
             }
-            Invoke-Checked -Description "Importing clean Ubuntu 24.04 distro '$name' into '$installLocation'" -Action {
+            Invoke-Checked -Description "Importing clean $($rootfsInfo.Name) distro '$name' into '$installLocation'" -Action {
                 wsl --import $name $installLocation $cachedRootfs --version 2
             }
         }

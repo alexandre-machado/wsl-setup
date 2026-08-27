@@ -1,5 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "defaultVersion": "24.04",
   "dataDiskPath": "D:\\wsl\\data\\repos.vhdx",
   "dataDiskMountName": "repos",
   "setDefaultDistro": "Ubuntu-Personal",
@@ -8,18 +9,21 @@
   "distros": [
     {
       "name": "Ubuntu-Personal",
+      "version": "24.04",
       "installLocation": "%LOCALAPPDATA%\\wsl\\Ubuntu-Personal",
       "gitName": "Your Name",
       "gitEmail": "your.email@example.com"
     },
     {
       "name": "Ubuntu-Work",
+      "version": "24.04",
       "installLocation": "%LOCALAPPDATA%\\wsl\\Ubuntu-Work",
       "gitName": "Your Name",
       "gitEmail": "your.work.email@example.com"
     },
     {
       "name": "Ubuntu-CI",
+      "version": "24.04",
       "installLocation": "%LOCALAPPDATA%\\wsl\\Ubuntu-CI",
       "mountDataDisk": false,
       "isolated": true
