@@ -83,22 +83,23 @@ Define your distro profiles in `%OneDrive%\Projetos\WorkSpace\wsl-profiles.json`
 Run from PowerShell (as Administrator or regular user with WSL permissions):
 
 ```pwsh
-irm https://raw.githubusercontent.com/alexandre-machado/wsl-setup/main/wsl-profiles.ps1 | iex
+irm https://raw.githubusercontent.com/alexandre-machado/wsl-setup/main/wsl-setup.ps1 | iex
 ```
 
 Or from a local clone:
 
 ```pwsh
-.\wsl-profiles.ps1
+.\wsl-setup.ps1
 ```
 
-#### What `wsl-profiles.ps1` executes automatically:
-1. **Rootfs Download & Cache:** Fetches the official Canonical Ubuntu 24.04 WSL rootfs (~380 MB) to `%TEMP%\wsl-cache`.
-2. **Distro Creation:** Imports each distro into its dedicated SSD location (`%LOCALAPPDATA%\wsl\<DistroName>`).
-3. **User Bootstrap:** Creates user `ubuntu-24` with passwordless `sudo` and default Zsh shell.
-4. **Data Disk Mounting:** Attaches `D:\wsl\data\repos.vhdx` and configures `/etc/fstab` using direct ext4 label `LABEL=wsl-repos /home/ubuntu-24/repos ext4 defaults,nofail 0 0`.
-5. **Credential Injection:** Restores SSH keys and GitHub CLI (`gh`) auth tokens from OneDrive.
-6. **Toolchain Installation:** Runs [`setup.sh`](setup.sh) inside the distro, installing `docker.io`, `docker-compose-v2`, `gh`, `jq`, `psql`, `rclone`, `rtk`, `lazydocker`, `btop`, and `claude`.
+#### What `wsl-setup.ps1` executes automatically:
+1. **WSL Check & Install:** Ensures Microsoft.WSL package and `.wslconfig` are present.
+2. **Rootfs Download & Cache:** Fetches the official Linux rootfs (e.g. Canonical Ubuntu 24.04 WSL rootfs ~380 MB, Alpine ~3 MB) to `%LOCALAPPDATA%\wsl\cache`.
+3. **Distro Creation:** Imports each distro into its dedicated SSD location (`%LOCALAPPDATA%\wsl\<DistroName>`).
+4. **User Bootstrap:** Creates user `ubuntu-24` with passwordless `sudo` and default Zsh shell.
+5. **Data Disk Mounting:** Attaches `D:\wsl\data\repos.vhdx` and configures `/etc/fstab` using direct ext4 label `LABEL=wsl-repos /home/ubuntu-24/repos ext4 defaults,nofail 0 0` (for non-isolated profiles).
+6. **Credential Injection:** Restores SSH keys and GitHub CLI (`gh`) auth tokens from OneDrive.
+7. **Toolchain Installation:** Runs [`setup.sh`](setup.sh) inside the distro, installing `docker.io`, `docker-compose-v2`, `gh`, `jq`, `psql`, `rclone`, `rtk`, `lazydocker`, `btop`, and `claude`.
 
 ---
 
@@ -116,12 +117,12 @@ wsl --install --no-distribution
 Ensure Microsoft OneDrive is signed in and your workspace folder is available:
 - `C:\Users\<user>\OneDrive\Projetos\WorkSpace` (contains `ssh/`, `gh/`, and `wsl-profiles.json`).
 
-### Step 3: Run the WSL Profiles Provisioner
+### Step 3: Run the WSL Provisioner
 From PowerShell:
 ```pwsh
-irm https://raw.githubusercontent.com/alexandre-machado/wsl-setup/main/wsl-profiles.ps1 | iex
+irm https://raw.githubusercontent.com/alexandre-machado/wsl-setup/main/wsl-setup.ps1 | iex
 ```
-*`wsl-profiles.ps1` will recreate all distros on `C:`, auto-attach `D:\wsl\data\repos.vhdx`, restore your SSH keys and `gh` tokens, and configure all dotfiles.*
+*`wsl-setup.ps1` will recreate all distros on `C:`, auto-attach `D:\wsl\data\repos.vhdx`, restore your SSH keys and `gh` tokens, and configure all dotfiles.*
 
 ### Step 4: Install & Connect Docker Desktop
 1. Download and install [Docker Desktop for Windows](https://www.docker.com/products/docker-desktop/).
@@ -170,7 +171,8 @@ Você pode escolher a distribuição Linux (`distribution`) e a versão (`versio
 
 | Script | Purpose |
 | :--- | :--- |
-| [`wsl-profiles.ps1`](wsl-profiles.ps1) | Main Windows orchestrator: multi-profile provisioning, VHDX mounting, user bootstrap. |
+| [`wsl-setup.ps1`](wsl-setup.ps1) | Main Windows orchestrator: multi-profile provisioning, VHDX mounting, user bootstrap. |
+| [`wsl-profiles.ps1`](wsl-profiles.ps1) | Backwards-compatible wrapper calling `wsl-setup.ps1`. |
 | [`setup.sh`](setup.sh) | Main in-distro orchestrator: runs modular setup scripts idempotently. |
 | [`scripts/apps.sh`](scripts/apps.sh) | Installs `docker.io`, `docker-compose-v2`, `gh`, `jq`, `psql`, `rclone`, `claude`, `lazydocker`, `btop`. |
 | [`scripts/ssh.sh`](scripts/ssh.sh) | Discovers and restores master SSH keys from OneDrive; configures GCM. |

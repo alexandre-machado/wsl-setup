@@ -16,13 +16,12 @@ irm https://raw.githubusercontent.com/alexandre-machado/wsl-setup/main/wsl-setup
 
 What to expect:
 
-1. WSL preflight summary is shown (installed package + distro state)
-2. You choose one bootstrap mode:
-   - `create-new` (default)
-   - `use-existing`
-   - `replace-existing` (confirmation required)
-3. Git name/email prompts appear
-4. Script hands off to WSL and runs [setup.sh](../setup.sh)
+1. Ensures WSL package and `.wslconfig` are installed
+2. Resolves `wsl-profiles.json` (or `wsl-profiles.template.json`)
+3. Preflight provisioning plan summary is rendered
+4. Attaches dedicated data disk (`repos.vhdx`)
+5. Imports Linux distros from cached rootfs and provisions `ubuntu-24` user
+6. Executes As-Code setup ([setup.sh](../setup.sh)) inside each distro
 
 ## Existing WSL Installation Path
 
@@ -56,5 +55,5 @@ After setup finishes:
 
 ## Safety Notes
 
-- `replace-existing` requires explicit `Y` before unregistering `Ubuntu-24.04`
-- If replacement confirmation is declined, bootstrap continues non-destructively
+- Existing distros are preserved by default (`replaceExisting: false`)
+- Distro replacement only occurs if `replaceIfExists: true` is configured and confirmed (or `-Force` is passed)

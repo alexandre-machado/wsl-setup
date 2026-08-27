@@ -2,17 +2,16 @@
 
 ## Runtime Inputs
 
-### Required identity variables
+### Profile Configuration (`wsl-profiles.json`)
 
-The setup flow uses these variables:
+Distro definitions, data disk paths, and Git identities are defined declaratively in `wsl-profiles.json` (see `wsl-profiles.template.json`):
 
-- `GIT_NAME`
-- `GIT_EMAIL`
-
-How values are set:
-
-- In Windows bootstrap: prompted via [wsl-setup.ps1](../wsl-setup.ps1) before handoff
-- In Linux flow: prompted in [scripts/user.sh](../scripts/user.sh) when missing
+- `defaultDistribution`: default Linux OS (e.g. `Ubuntu`, `Debian`, `Alpine`)
+- `defaultVersion`: default OS release (e.g. `24.04`, `12`, `3.20`)
+- `dataDiskPath`: path to dedicated VHDX (e.g. `D:\wsl\data\repos.vhdx`)
+- `dataDiskMountName`: mount point name (e.g. `repos`)
+- `setDefaultDistro`: distro to mark as default WSL instance
+- `distros`: list of distro profiles with `name`, `distribution`, `version`, `installLocation`, `gitName`, `gitEmail`, `isolated`, `mountDataDisk`, `replaceIfExists`
 
 ### Optional module toggles
 
@@ -23,11 +22,11 @@ Used by [setup.sh](../setup.sh):
 
 ## WSL Bootstrap Behavior
 
-Bootstrap mode in [wsl-setup.ps1](../wsl-setup.ps1):
+Bootstrap behavior in [wsl-setup.ps1](../wsl-setup.ps1):
 
-- `create-new` (default): ensures `Ubuntu-24.04` exists and is default
-- `use-existing`: keeps existing distro state untouched
-- `replace-existing`: requires explicit `Y` confirmation before unregistering the target distro
+- `-ConfigFile <path>`: specify custom path to profiles JSON
+- `-DryRun`: preview all steps without mutating system state
+- `-Force`: bypass interactive prompts for profile replacement
 
 ## Script Configuration Surfaces
 
