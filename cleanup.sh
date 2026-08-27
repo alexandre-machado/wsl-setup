@@ -196,14 +196,20 @@ run_tool_clean brew "brew cleanup --prune=all"
 if $DRY_RUN; then
     skip "apt clean"
 else
-    sudo apt clean -y &>/dev/null && ok "  [x] apt clean"
+    if command -v apt-get &>/dev/null; then
+        sudo apt-get clean &>/dev/null || true
+        ok "  [x] apt clean"
+    fi
 fi
 
 # Journal logs
 if $DRY_RUN; then
     skip "journalctl vacuum (3 dias)"
 else
-    sudo journalctl --vacuum-time=3d &>/dev/null 2>&1 && ok "  [x] journalctl vacuum (3 dias)"
+    if command -v journalctl &>/dev/null; then
+        sudo journalctl --vacuum-time=3d &>/dev/null 2>&1 || true
+        ok "  [x] journalctl vacuum (3 dias)"
+    fi
 fi
 
 if $DRY_RUN; then
