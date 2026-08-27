@@ -57,60 +57,149 @@ function To-Bool {
 
 function Get-DistroRootfsInfo {
     param(
+        [string]$Distribution,
         [string]$VersionOrCodename
     )
 
-    $v = if ([string]::IsNullOrWhiteSpace($VersionOrCodename)) { "24.04" } else { $VersionOrCodename.Trim().ToLowerInvariant() }
+    $dist = if ([string]::IsNullOrWhiteSpace($Distribution)) { "ubuntu" } else { $Distribution.Trim().ToLowerInvariant() }
+    $ver = if ([string]::IsNullOrWhiteSpace($VersionOrCodename)) { "" } else { $VersionOrCodename.Trim().ToLowerInvariant() }
 
-    switch ($v) {
-        { $_ -in @("24.04", "noble", "ubuntu-24.04", "ubuntu-24", "lts", "latest") } {
-            return @{
-                Version = "24.04"
-                Codename = "noble"
-                Name = "Ubuntu 24.04 LTS (Noble Numbat)"
-                Url = "https://cdimages.ubuntu.com/ubuntu-wsl/noble/daily-live/current/noble-wsl-amd64.wsl"
-                CacheFile = "noble-wsl-amd64.wsl"
-            }
+    # Custom URL directly passed
+    if ($dist -like "http*" -or $ver -like "http*") {
+        $url = if ($dist -like "http*") { $dist } else { $ver }
+        $filename = [System.IO.Path]::GetFileName($url)
+        return @{
+            Distribution = "Custom"
+            Version = "custom"
+            Name = "Custom Linux RootFS ($url)"
+            Url = $url
+            CacheFile = $filename
+            Family = "custom"
         }
-        { $_ -in @("22.04", "jammy", "ubuntu-22.04", "ubuntu-22") } {
-            return @{
-                Version = "22.04"
-                Codename = "jammy"
-                Name = "Ubuntu 22.04 LTS (Jammy Jellyfish)"
-                Url = "https://cdimages.ubuntu.com/ubuntu-wsl/jammy/daily-live/current/jammy-wsl-amd64.wsl"
-                CacheFile = "jammy-wsl-amd64.wsl"
-            }
-        }
-        { $_ -in @("20.04", "focal", "ubuntu-20.04", "ubuntu-20") } {
-            return @{
-                Version = "20.04"
-                Codename = "focal"
-                Name = "Ubuntu 20.04 LTS (Focal Fossa)"
-                Url = "https://cloud-images.ubuntu.com/wsl/focal/current/ubuntu-focal-wsl-amd64-wsl.rootfs.tar.gz"
-                CacheFile = "focal-wsl-amd64.tar.gz"
-            }
-        }
-        default {
-            if ($v -like "http*") {
-                $filename = [System.IO.Path]::GetFileName($v)
+    }
+
+    # Debian Family: Ubuntu
+    if ($dist -match "ubuntu" -or $ver -in @("noble", "jammy", "focal", "bionic", "24.04", "22.04", "20.04")) {
+        $targetVer = if ($ver) { $ver } else { "24.04" }
+        switch ($targetVer) {
+            { $_ -in @("22.04", "jammy", "ubuntu-22.04") } {
                 return @{
-                    Version = "custom"
-                    Codename = "custom"
-                    Name = "Custom Linux Rootfs ($v)"
-                    Url = $v
-                    CacheFile = $filename
+                    Distribution = "Ubuntu"
+                    Version = "22.04"
+                    Codename = "jammy"
+                    Name = "Ubuntu 22.04 LTS (Jammy Jellyfish)"
+                    Url = "https://cdimages.ubuntu.com/ubuntu-wsl/jammy/daily-live/current/jammy-wsl-amd64.wsl"
+                    CacheFile = "jammy-wsl-amd64.wsl"
+                    Family = "debian"
                 }
             }
-            return @{
-                Version = "24.04"
-                Codename = "noble"
-                Name = "Ubuntu 24.04 LTS (Noble Numbat)"
-                Url = "https://cdimages.ubuntu.com/ubuntu-wsl/noble/daily-live/current/noble-wsl-amd64.wsl"
-                CacheFile = "noble-wsl-amd64.wsl"
+            { $_ -in @("20.04", "focal", "ubuntu-20.04") } {
+                return @{
+                    Distribution = "Ubuntu"
+                    Version = "20.04"
+                    Codename = "focal"
+                    Name = "Ubuntu 20.04 LTS (Focal Fossa)"
+                    Url = "https://cloud-images.ubuntu.com/wsl/focal/current/ubuntu-focal-wsl-amd64-wsl.rootfs.tar.gz"
+                    CacheFile = "focal-wsl-amd64.tar.gz"
+                    Family = "debian"
+                }
+            }
+            default {
+                return @{
+                    Distribution = "Ubuntu"
+                    Version = "24.04"
+                    Codename = "noble"
+                    Name = "Ubuntu 24.04 LTS (Noble Numbat)"
+                    Url = "https://cdimages.ubuntu.com/ubuntu-wsl/noble/daily-live/current/noble-wsl-amd64.wsl"
+                    CacheFile = "noble-wsl-amd64.wsl"
+                    Family = "debian"
+                }
             }
         }
     }
+
+    # Debian Family: Debian GNU/Linux
+    if ($dist -match "debian" -or $ver -in @("bookworm", "bullseye", "12", "11")) {
+        $targetVer = if ($ver) { $ver } else { "12" }
+        switch ($targetVer) {
+            { $_ -in @("11", "bullseye") } {
+                return @{
+                    Distribution = "Debian"
+                    Version = "11"
+                    Codename = "bullseye"
+                    Name = "Debian 11 (Bullseye)"
+                    Url = "https://github.com/debuerreotype/docker-debian-artifacts/raw/dist-amd64/bullseye/rootfs.tar.xz"
+                    CacheFile = "debian-11-rootfs.tar.xz"
+                    Family = "debian"
+                }
+            }
+            default {
+                return @{
+                    Distribution = "Debian"
+                    Version = "12"
+                    Codename = "bookworm"
+                    Name = "Debian 12 (Bookworm)"
+                    Url = "https://github.com/debuerreotype/docker-debian-artifacts/raw/dist-amd64/bookworm/rootfs.tar.xz"
+                    CacheFile = "debian-12-rootfs.tar.xz"
+                    Family = "debian"
+                }
+            }
+        }
+    }
+
+    # Alpine Linux (Ultra-lightweight musl/busybox, ~3 MB)
+    if ($dist -match "alpine" -or $ver -match "alpine") {
+        $targetVer = if ($ver) { $ver } else { "3.20" }
+        return @{
+            Distribution = "Alpine"
+            Version = $targetVer
+            Codename = "alpine"
+            Name = "Alpine Linux $targetVer"
+            Url = "https://dl-cdn.alpinelinux.org/alpine/v3.20/releases/x86_64/alpine-minirootfs-3.20.2-x86_64.tar.gz"
+            CacheFile = "alpine-minirootfs-3.20.2-x86_64.tar.gz"
+            Family = "alpine"
+        }
+    }
+
+    # Arch Linux
+    if ($dist -match "arch") {
+        return @{
+            Distribution = "Arch"
+            Version = "rolling"
+            Codename = "rolling"
+            Name = "Arch Linux (Rolling)"
+            Url = "https://gitlab.archlinux.org/archlinux/archlinux-docker/-/raw/master/archlinux-rootfs.tar.gz"
+            CacheFile = "archlinux-rootfs.tar.gz"
+            Family = "arch"
+        }
+    }
+
+    # Fedora
+    if ($dist -match "fedora") {
+        $targetVer = if ($ver) { $ver } else { "40" }
+        return @{
+            Distribution = "Fedora"
+            Version = $targetVer
+            Codename = "fedora"
+            Name = "Fedora $targetVer (Container RootFS)"
+            Url = "https://download.fedoraproject.org/pub/fedora/linux/releases/40/Container/x86_64/images/Fedora-Container-Base-Generic.x86_64-40-1.14.tar.xz"
+            CacheFile = "fedora-40-rootfs.tar.xz"
+            Family = "fedora"
+        }
+    }
+
+    # Fallback to Ubuntu 24.04 LTS
+    return @{
+        Distribution = "Ubuntu"
+        Version = "24.04"
+        Codename = "noble"
+        Name = "Ubuntu 24.04 LTS (Noble Numbat)"
+        Url = "https://cdimages.ubuntu.com/ubuntu-wsl/noble/daily-live/current/noble-wsl-amd64.wsl"
+        CacheFile = "noble-wsl-amd64.wsl"
+        Family = "debian"
+    }
 }
+
 
 function Escape-BashSingleQuoted {
     param([string]$Value)
@@ -212,8 +301,9 @@ Write-Host "=== WSL Multi-Profile Provisioning Plan (Pure As-Code) ===" -Foregro
 Write-Host "Data VHDX:          $dataDiskPath -> /mnt/wsl/$dataDiskMountName"
 Write-Host "Target Profiles:"
 foreach ($p in $config.distros) {
-    $pVersionRaw = if ($p.version) { $p.version } elseif ($p.release) { $p.release } elseif ($config.defaultVersion) { $config.defaultVersion } else { "24.04" }
-    $pInfo = Get-DistroRootfsInfo -VersionOrCodename $pVersionRaw
+    $pDistRaw = if ($p.distribution) { $p.distribution } elseif ($p.distro) { $p.distro } elseif ($p.os) { $p.os } elseif ($config.defaultDistribution) { $config.defaultDistribution } else { "Ubuntu" }
+    $pVersionRaw = if ($p.version) { $p.version } elseif ($p.release) { $p.release } elseif ($config.defaultVersion) { $config.defaultVersion } else { "" }
+    $pInfo = Get-DistroRootfsInfo -Distribution $pDistRaw -VersionOrCodename $pVersionRaw
     $rawLoc = if ($p.installLocation) { $p.installLocation } else { "%LOCALAPPDATA%\wsl\$($p.name)" }
     $pLoc = Expand-ConfigValue $rawLoc
     $pExists = if ($existingDistros -contains $p.name) { "[Exists]" } else { "[New]" }
@@ -269,9 +359,10 @@ foreach ($profile in $config.distros) {
         }
     }
 
-    # Resolve rootfs image for this distro profile
-    $pVersionRaw = if ($profile.version) { $profile.version } elseif ($profile.release) { $profile.release } elseif ($config.defaultVersion) { $config.defaultVersion } else { "24.04" }
-    $rootfsInfo = Get-DistroRootfsInfo -VersionOrCodename $pVersionRaw
+    # Resolve Linux distribution and rootfs image for this distro profile
+    $pDistRaw = if ($profile.distribution) { $profile.distribution } elseif ($profile.distro) { $profile.distro } elseif ($profile.os) { $profile.os } elseif ($config.defaultDistribution) { $config.defaultDistribution } else { "Ubuntu" }
+    $pVersionRaw = if ($profile.version) { $profile.version } elseif ($profile.release) { $profile.release } elseif ($config.defaultVersion) { $config.defaultVersion } else { "" }
+    $rootfsInfo = Get-DistroRootfsInfo -Distribution $pDistRaw -VersionOrCodename $pVersionRaw
     $cachedRootfs = Join-Path $cacheDir $rootfsInfo.CacheFile
 
     if (-not (Test-Path -LiteralPath $cachedRootfs)) {

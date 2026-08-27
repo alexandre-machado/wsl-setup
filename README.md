@@ -151,6 +151,21 @@ cd ~/repos/NexaDuo/chat-services
 
 ---
 
+### 🐧 Distribuições Linux Suportadas (Pure As-Code)
+
+Você pode escolher a distribuição Linux (`distribution`) e a versão (`version`) de forma independente para cada profile no `wsl-profiles.json`:
+
+| Distribuição (`distribution`) | Versões Suportadas (`version`) | Família / Base | Tamanho RootFS |
+| :--- | :--- | :--- | :--- |
+| **`Ubuntu`** *(Padrão)* | `24.04` (Noble LTS), `22.04` (Jammy LTS), `20.04` (Focal LTS) | Debian / APT | ~380 MB |
+| **`Debian`** | `12` (Bookworm), `11` (Bullseye) | Debian / APT | ~110 MB |
+| **`Alpine`** | `3.20`, `3.19` | Musl / APK (Ultra-leve) | **~3 MB** |
+| **`Arch`** | `rolling` | Arch / Pacman | ~180 MB |
+| **`Fedora`** | `40` | Red Hat / DNF | ~160 MB |
+| **`Custom`** | Qualquer URL HTTP/HTTPS direta | Custom | Variável |
+
+---
+
 ## 🧰 Key Features & Scripts Reference
 
 | Script | Purpose |
