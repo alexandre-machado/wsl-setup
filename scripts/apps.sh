@@ -94,10 +94,9 @@ run sudo apt install -y postgresql-client
 # Cloud Storage Sync (rclone)
 run sudo apt install -y rclone
 
-# Docker CLI & Compose plugin (native Linux binaries, service disabled to use Docker Desktop socket)
-run sudo apt install -y docker.io docker-compose-v2
-run sudo systemctl disable --now docker.service docker.socket 2>/dev/null || true
-run sudo usermod -aG docker "$USER" 2>/dev/null || true
+# Docker CLI, Compose and buildx now live in scripts/docker.sh — it also heals
+# a half-applied Docker Desktop WSL Integration, which needs more than an apt
+# install. Run it with: ./setup.sh --only docker
 
 # Claude Code CLI (guard: skip when already installed)
 if command -v claude > /dev/null 2>&1; then

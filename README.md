@@ -133,6 +133,22 @@ irm https://raw.githubusercontent.com/alexandre-machado/wsl-setup/main/wsl-setup
    wsl --shutdown
    ```
 
+> **If `docker` says "command not found" inside a distro**, Docker Desktop's WSL
+> Integration is half-applied: it left `/mnt/wsl/docker-desktop/cli-tools` empty,
+> so every injected `docker*` symlink dangles even though the engine is healthy.
+> This most often happens after splitting or renaming a distro. Heal it without
+> touching the GUI or restarting the engine:
+>
+> ```zsh
+> ./setup.sh --only docker
+> ```
+>
+> That installs the distro's own `docker.io`/`docker-buildx` CLI and points
+> `/var/run/docker.sock` at Docker Desktop's always-present `docker.proxy.sock`
+> via a boot-time systemd unit. Worth fixing promptly: anything calling `docker`
+> from cron fails with `docker: command not found` and, without its own
+> alerting, just silently stops running.
+
 ### Step 5: Start Chat Services / Repositories
 Open your terminal into `Ubuntu-Personal`:
 ```zsh
@@ -174,7 +190,8 @@ Você pode escolher a distribuição Linux (`distribution`) e a versão (`versio
 | [`wsl-setup.ps1`](wsl-setup.ps1) | Main Windows orchestrator: multi-profile provisioning, VHDX mounting, user bootstrap. |
 | [`wsl-profiles.ps1`](wsl-profiles.ps1) | Backwards-compatible wrapper calling `wsl-setup.ps1`. |
 | [`setup.sh`](setup.sh) | Main in-distro orchestrator: runs modular setup scripts idempotently. |
-| [`scripts/apps.sh`](scripts/apps.sh) | Installs `docker.io`, `docker-compose-v2`, `gh`, `jq`, `psql`, `rclone`, `claude`, `lazydocker`, `btop`. |
+| [`scripts/apps.sh`](scripts/apps.sh) | Installs `gh`, `jq`, `psql`, `rclone`, `claude`, `lazydocker`, `btop`. |
+| [`scripts/docker.sh`](scripts/docker.sh) | Installs `docker.io`, `docker-compose-v2`, `docker-buildx` and wires `/var/run/docker.sock` to the Docker Desktop engine (heals a half-applied WSL Integration). |
 | [`scripts/ssh.sh`](scripts/ssh.sh) | Discovers and restores master SSH keys from OneDrive; configures GCM. |
 | [`scripts/dotfiles.sh`](scripts/dotfiles.sh) | Configures Oh My Zsh, plugins (`F-Sy-H`, `zsh-autosuggestions`), and Claude statusLine. |
 | [`scripts/.zshrc`](scripts/.zshrc) | Shell configuration, aliases (`hc`, `marc`, `copyssh`, `copygpg`, `gitcfg`), and auto-mount fallback. |
