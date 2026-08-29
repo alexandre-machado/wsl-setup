@@ -74,3 +74,16 @@
   wipes its content most runs (caught pre-merge in PR #15). Render to a temp
   file first, then `sudo install -m 644 "$tmp" "$f"` — and check the install's
   exit code before printing success.
+- Docker Desktop's WSL Integration can be **half-applied**: the distro stays
+  listed in `IntegratedWslDistros` and its per-distro proxy socket exists, but
+  `/mnt/wsl/docker-desktop/cli-tools` is left empty, so every injected
+  `docker*` symlink dangles and the distro reports "The command 'docker' could
+  not be found in this WSL 2 distro" while the engine is perfectly healthy.
+  Splitting/renaming a distro is the usual trigger. Do NOT diagnose this from
+  the Docker Desktop settings file — it said the distro was integrated the
+  whole time. Probe `docker.proxy.sock` directly; it answers `/_ping` even
+  when the CLI is gone. `scripts/docker.sh` heals it with the distro's native
+  apt CLI plus a systemd-linked socket, so no GUI toggle and no engine restart
+  is needed. Blast radius is bigger than an interactive shell: a nightly
+  `docker exec` backup in another repo died with "docker: command not found"
+  for two days, silently, because only its own log recorded the failure.

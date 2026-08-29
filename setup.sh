@@ -5,7 +5,7 @@
 # Main install script
 #
 # Usage: ./setup.sh [--dry-run|-n] [--only <module>[,<module>...]]
-# Modules: apps, network-tuning, wsl-conf, dotfiles, npm, ssh, gpg
+# Modules: apps, docker, network-tuning, wsl-conf, dotfiles, npm, ssh, gpg
 
 # Honor an env-provided DRY_RUN (e.g. DRY_RUN=true ./setup.sh) — never
 # silently downgrade it to a real run. Normalize truthy spellings.
@@ -14,7 +14,7 @@ case "${DRY_RUN:-false}" in
   *)          DRY_RUN=false ;;
 esac
 ONLY=""
-ALL_MODULES="apps network-tuning wsl-conf dotfiles npm ssh gpg"
+ALL_MODULES="apps docker network-tuning wsl-conf dotfiles npm ssh gpg"
 
 usage() {
   echo "Usage: $0 [--dry-run|-n] [--only <module>[,<module>...]]"
@@ -82,6 +82,10 @@ run_module() {
 
 # Install applications
 run_module apps
+
+# Wire the docker CLI to the Docker Desktop engine (and heal a half-applied
+# WSL Integration, which leaves every docker symlink dangling)
+run_module docker
 
 # Apply WSL2 kernel / network tuning for AI terminals
 run_module network-tuning
