@@ -37,6 +37,16 @@ fi
 # Move permanent files to Home directory
 replace "./scripts/.zshrc" ".zshrc"
 replace "./scripts/.tmux.conf" ".tmux.conf"
+run mkdir -p "${HOME}/.config/zellij"
+ZELLIJ_CONFIG_SRC="${DOTFILES_DIRECTORY}/scripts/zellij/config.kdl"
+ZELLIJ_CONFIG_DEST="${HOME}/.config/zellij/config.kdl"
+if cmp -s "$ZELLIJ_CONFIG_SRC" "$ZELLIJ_CONFIG_DEST"; then
+  echo_info "Zellij config already up to date - skipping."
+elif [ "$DRY_RUN" = true ]; then
+  echo_dry "install -m 644 ${ZELLIJ_CONFIG_SRC} ${ZELLIJ_CONFIG_DEST}"
+else
+  install -m 644 "$ZELLIJ_CONFIG_SRC" "$ZELLIJ_CONFIG_DEST"
+fi
 run mkdir -p "${HOME}/.local/bin"
 TMUX_VSCODE_SRC="${DOTFILES_DIRECTORY}/scripts/tmux-vscode-session.sh"
 TMUX_VSCODE_DEST="${HOME}/.local/bin/tmux-vscode-session"
@@ -46,6 +56,15 @@ elif [ "$DRY_RUN" = true ]; then
   echo_dry "install -m 755 ${TMUX_VSCODE_SRC} ${TMUX_VSCODE_DEST}"
 else
   install -m 755 "$TMUX_VSCODE_SRC" "$TMUX_VSCODE_DEST"
+fi
+ZELLIJ_VSCODE_SRC="${DOTFILES_DIRECTORY}/scripts/zellij-vscode-session.sh"
+ZELLIJ_VSCODE_DEST="${HOME}/.local/bin/zellij-vscode-session"
+if cmp -s "$ZELLIJ_VSCODE_SRC" "$ZELLIJ_VSCODE_DEST"; then
+  echo_info "zellij-vscode-session already up to date - skipping."
+elif [ "$DRY_RUN" = true ]; then
+  echo_dry "install -m 755 ${ZELLIJ_VSCODE_SRC} ${ZELLIJ_VSCODE_DEST}"
+else
+  install -m 755 "$ZELLIJ_VSCODE_SRC" "$ZELLIJ_VSCODE_DEST"
 fi
 
 # Claude Code statusLine script (~/.claude/statusline-command.sh). Only the

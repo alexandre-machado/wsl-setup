@@ -66,6 +66,17 @@ Configured in [scripts/gpg.sh](../scripts/gpg.sh):
 
 [scripts/npm.sh](../scripts/npm.sh) installs Node via NVM (`nvm install 18`).
 
+### Zellij and VS Code
+
+The Linux bootstrap installs Zellij for WSL users through
+[scripts/apps.sh](../scripts/apps.sh). Windows users should install the native
+build with `winget install --id arndawg.zellij-windows --exact` and configure
+VS Code to launch `zellij.exe` directly. The complete Windows profile and the
+native `%USERPROFILE%\.config\zellij\config.kdl` example are documented in the
+VS Code Integration section of the [README](../README.md). That configuration
+explicitly unbinds `Esc` so Gemini CLI and other terminal applications receive
+it.
+
 ## Operational Configuration
 
 ### Cleanup behavior

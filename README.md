@@ -99,7 +99,7 @@ Or from a local clone:
 4. **User Bootstrap:** Creates user `ubuntu-24` with passwordless `sudo` and default Zsh shell.
 5. **Data Disk Mounting:** Attaches `D:\wsl\data\repos.vhdx` and configures `/etc/fstab` using direct ext4 label `LABEL=wsl-repos /home/ubuntu-24/repos ext4 defaults,nofail 0 0` (for non-isolated profiles).
 6. **Credential Injection:** Restores SSH keys and GitHub CLI (`gh`) auth tokens from OneDrive.
-7. **Toolchain Installation:** Runs [`setup.sh`](setup.sh) inside the distro, installing `docker.io`, `docker-compose-v2`, `gh`, `jq`, `psql`, `rclone`, `rtk`, `lazydocker`, `btop`, and `claude`.
+7. **Toolchain Installation:** Runs [`setup.sh`](setup.sh) inside the distro, installing `docker.io`, `docker-compose-v2`, `gh`, `jq`, `psql`, `rclone`, `lazydocker`, `btop`, and `claude`.
 
 ---
 
@@ -165,6 +165,45 @@ cd ~/repos/NexaDuo/chat-services
    ```zsh
    code ~/repos/NexaDuo/chat-services
    ```
+3. Install the native Windows build of Zellij:
+   ```powershell
+   winget install --id arndawg.zellij-windows --exact
+   ```
+4. To use native Zellij from the Windows VS Code terminal, add this profile to
+   your Windows VS Code `settings.json`:
+   ```json
+   "terminal.integrated.profiles.windows": {
+     "Zellij (Windows)": {
+       "path": "zellij.exe",
+       "args": [
+         "attach", "--create", "vscode"
+       ],
+       "icon": "terminal"
+     }
+   },
+   "terminal.integrated.defaultProfile.windows": "Zellij (Windows)"
+   ```
+   This profile does not use WSL and reuses the `vscode` session. Put the
+   following in
+   `%USERPROFILE%\.config\zellij\config.kdl` so `Esc` reaches Gemini CLI:
+   ```kdl
+   default_shell "pwsh"
+   copy_on_select true
+   pane_frames false
+   // Forward normal terminal input to PowerShell and Gemini CLI.
+   // Press Ctrl-g to temporarily enter Zellij key mode.
+   default_mode "locked"
+
+   keybinds {
+       shared_except "locked" {
+           unbind "Esc"
+       }
+       locked {
+           unbind "Esc"
+       }
+   }
+   ```
+   Restart the existing Zellij session after changing this configuration.
 
 ---
 
@@ -195,6 +234,8 @@ Você pode escolher a distribuição Linux (`distribution`) e a versão (`versio
 | [`scripts/ssh.sh`](scripts/ssh.sh) | Discovers and restores master SSH keys from OneDrive; configures GCM. |
 | [`scripts/dotfiles.sh`](scripts/dotfiles.sh) | Configures Oh My Zsh, plugins (`F-Sy-H`, `zsh-autosuggestions`), and Claude statusLine. |
 | [`scripts/.zshrc`](scripts/.zshrc) | Shell configuration, aliases (`hc`, `marc`, `copyssh`, `copygpg`, `gitcfg`), and auto-mount fallback. |
+| [`scripts/zellij/config.kdl`](scripts/zellij/config.kdl) | Zellij defaults for WSL and the VS Code/Windows clipboard. |
+| [`scripts/zellij-vscode-session.sh`](scripts/zellij-vscode-session.sh) | Opens or reuses one Zellij session per repository. |
 | [`scripts/network-tuning.sh`](scripts/network-tuning.sh) | Kernel & TCP buffer optimization for AI terminal tools under Mirrored networking. |
 
 ---
@@ -208,6 +249,7 @@ Você pode escolher a distribuição Linux (`distribution`) e a versão (`versio
 - `repos` — Navigates to `~/repos` (`D:\wsl\data\repos.vhdx`).
 - `zshcfg` — Opens `~/.zshrc` in VS Code.
 - `gitcfg` — Opens `~/.gitconfig` in VS Code.
+- `zjv` — Opens or reuses the Zellij session for the current repository.
 
 ---
 

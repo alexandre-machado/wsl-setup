@@ -41,11 +41,17 @@ run sudo apt install -y nodejs yarn
 # Resource Monitor
 run sudo apt install -y btop
 
-# Terminal multiplexer (guard: skip when already installed)
+# Terminal multiplexers (guard: skip when already installed)
 if command -v tmux > /dev/null 2>&1; then
   echo_info "tmux already installed - skipping."
 else
   run sudo apt install -y tmux
+fi
+
+if command -v zellij > /dev/null 2>&1; then
+  echo_info "zellij already installed - skipping."
+else
+  run sudo apt install -y zellij
 fi
 
 # Lazydocker (guard: skip when already installed)

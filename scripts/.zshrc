@@ -66,6 +66,10 @@ alias winhome="/mnt/c/Users/$(echo $USER)"
 
 # Open .zshrc in VSCode
 alias zshcfg="code ~/.zshrc"
+# Keep the config in WSL by default; a Windows/OneDrive path can override it.
+export ZELLIJ_CONFIG_DIR="${ZELLIJ_CONFIG_DIR:-$HOME/.config/zellij}"
+alias zj="zellij"
+alias zjv="zellij-vscode-session"
 
 # Claude CLI Shortcuts
 alias hc="claude --dangerously-skip-permissions"

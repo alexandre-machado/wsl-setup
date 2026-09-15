@@ -1,0 +1,22 @@
+// Zellij configuration for WSL terminals hosted by VS Code or Windows Terminal.
+// Keep clipboard ownership with the outer terminal to avoid duplicate copies.
+copy_on_select true
+copy_command "clip.exe"
+scroll_buffer_size 100000
+pane_frames false
+// Locked mode forwards normal terminal input to the active pane.
+// Press Ctrl-g to temporarily enter Zellij key mode.
+default_mode "locked"
+
+keybinds {
+    shared_except "locked" {
+        unbind "Esc"
+        bind "Alt h" { MoveFocusOrTab "Left"; }
+        bind "Alt j" { MoveFocusOrTab "Down"; }
+        bind "Alt k" { MoveFocusOrTab "Up"; }
+        bind "Alt l" { MoveFocusOrTab "Right"; }
+    }
+    locked {
+        unbind "Esc"
+    }
+}
