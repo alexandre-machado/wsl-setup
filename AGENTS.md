@@ -87,3 +87,13 @@
   is needed. Blast radius is bigger than an interactive shell: a nightly
   `docker exec` backup in another repo died with "docker: command not found"
   for two days, silently, because only its own log recorded the failure.
+- The **opposite** failure also happened: a native `dockerd` running next to
+  Docker Desktop. `docker.io` ships the daemon, and `disable` alone does not
+  keep it down (apt upgrades, a manual `systemctl start` during a DR, socket
+  activation all revive it). It then held `/var/run/docker.sock`; Docker
+  Desktop later re-created the path on top, so the CLI saw Desktop's EMPTY
+  engine while a whole production stack kept running on the native one, and
+  cron backups failed for two days. `scripts/docker.sh` now **masks**
+  `docker.service`/`docker.socket`, and the socket-link check requires
+  `/info` to report `Docker Desktop` — a bare `/_ping` is answered by any engine.
+  Diagnose with `docker info --format '{{.OperatingSystem}}'`.

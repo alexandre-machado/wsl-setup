@@ -45,7 +45,16 @@ DOCKER_LINK_UNIT=/etc/systemd/system/docker-desktop-socket.service
 # required by `docker compose build` — without it the injected Docker Desktop
 # buildx symlink is the only one present, and it dangles under this failure.
 run sudo apt install -y docker.io docker-compose-v2 docker-buildx
+# MASK, not just disable. A disabled docker.socket still comes back: apt
+# upgrades of docker.io, a manual `systemctl start`, or socket activation all
+# revive the native dockerd. It then owns /var/run/docker.sock, Docker Desktop
+# later re-creates the path on top of it, and the two engines fight over one
+# socket — containers keep running on the native engine while `docker ps`
+# shows Docker Desktop's empty one. That is what happened after a Windows
+# reformat: a whole production stack ran on the native dockerd for two days
+# and every cron `docker exec` backup failed. Masking makes that impossible.
 run sudo systemctl disable --now docker.service docker.socket 2>/dev/null || true
+run sudo systemctl mask docker.service docker.socket 2>/dev/null || true
 run sudo usermod -aG docker "$USER" 2>/dev/null || true
 
 # Heal a clobbered client: Docker Desktop replaces the package-owned binary
@@ -84,10 +93,11 @@ TARGET=/var/run/docker.sock
 
 [ -S "$PROXY" ] || { echo "docker-desktop-socket-link: $PROXY absent; nothing to do"; exit 0; }
 
-# If the well-known path already talks to an engine, Docker Desktop's own
-# integration is healthy — leave it alone rather than fight it.
-if curl -s -m 3 --unix-socket "$TARGET" http://localhost/_ping 2>/dev/null | grep -q OK; then
-  echo "docker-desktop-socket-link: $TARGET already healthy"
+# If the well-known path already talks to DOCKER DESKTOP's engine, its own
+# integration is healthy — leave it alone rather than fight it. A bare /_ping
+# is not enough: a stray native dockerd answers it too, and would be kept.
+if curl -s -m 3 --unix-socket "$TARGET" http://localhost/info 2>/dev/null | grep -q '"OperatingSystem":"Docker Desktop'; then
+  echo "docker-desktop-socket-link: $TARGET already healthy (Docker Desktop engine)"
   exit 0
 fi
 
@@ -136,7 +146,13 @@ fi
 if [ "$DRY_RUN" = true ]; then
   echo_dry "docker version (verify the client reaches the engine)"
 elif docker version > /dev/null 2>&1; then
-  echo_success "Docker CLI reaches the Docker Desktop engine."
+  engine_os="$(docker info --format '{{.OperatingSystem}}' 2>/dev/null)"
+  case "$engine_os" in
+    "Docker Desktop"*) echo_success "Docker CLI reaches the Docker Desktop engine." ;;
+    *) echo_warning "Docker CLI reaches a NON-Docker-Desktop engine ($engine_os)."
+       echo_warning "  A native dockerd is answering /var/run/docker.sock. Check:"
+       echo_warning "  systemctl is-enabled docker.socket docker  (both must be 'masked')" ;;
+  esac
 else
   echo_info "Docker CLI installed but the engine is not reachable yet."
   echo_info "  Check Docker Desktop is running and this distro is enabled under"
